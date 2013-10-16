@@ -1,8 +1,8 @@
 CREATE TABLE User (
 	UserID			VARCHAR(400) Primary Key NOT NULL,
 	Rating			INT NOT NULL,
-	Location		VARCHAR(100) NOT NULL,
-	Country			VARCHAR(100) NOT NULL
+	Location		VARCHAR(100),
+	Country			VARCHAR(100)
 );
 
 CREATE TABLE Item (
