@@ -8,7 +8,6 @@ CREATE TABLE User (
 CREATE TABLE Item (
 	ItemID 			INT Primary Key NOT NULL,
 	Name			VARCHAR(400),
-	Currently		DECIMAL(8,2),
 	Buy_Price		DECIMAL(8,2),
 	First_Bid		DECIMAL(8,2) NOT NULL,
 	Started			TIMESTAMP,
