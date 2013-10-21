@@ -25,7 +25,6 @@
 
 //package edu.ucla.cs.cs144;
 
-import java.awt.print.PrinterGraphics;
 import java.io.*;
 import java.text.*;
 import java.util.*;
@@ -201,10 +200,10 @@ class MyParser {
         
         /**************************************************************/
 
-        PrintWriter itemDat = new PrintWriter("Item.dat");
-        PrintWriter userDat = new PrintWriter("User.dat");
-        PrintWriter itemBidDat = new PrintWriter("ItemBid.dat");
-        PrintWriter itemCategoryDat = new PrintWriter("ItemCategory.dat");
+        PrintWriter itemDat = new PrintWriter(new FileOutputStream("Item.dat"), true);
+        PrintWriter userDat = new PrintWriter(new FileOutputStream("User.dat"), true);
+        PrintWriter itemBidDat = new PrintWriter(new FileOutputStream("ItemBid.dat"), true);
+        PrintWriter itemCategoryDat = new PrintWriter(new FileOutputStream("ItemCategory.dat"), true);
 
         Element root = doc.getDocumentElement();
         Element[] items = getElementsByTagNameNR(root, "Item");
