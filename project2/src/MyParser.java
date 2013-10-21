@@ -234,6 +234,11 @@ class MyParser {
             for (Element bid : getElementsByTagNameNR(bids, "Bid")) {
                 Element bidder = getElementByTagNameNR(bid, "Bidder");
                 String bidderId = bidder.getAttribute("UserID");
+                String bidderRating = bidder.getAttribute("Rating");
+                String bidderLocation = getElementTextByTagNameNR(item, "Location");
+                String bidderCountry = getElementTextByTagNameNR(item, "Country");
+                userDat.printf("%s,%s,%s,%s\n", bidderId, bidderRating, bidderLocation, bidderCountry);
+
                 String time = formatDate(getElementTextByTagNameNR(bid, "Time"));
                 String amount = strip(getElementTextByTagNameNR(bid, "Amount"));
                 itemBidDat.printf("%s,%s,%s,%s\n", itemId, bidderId, time, amount);
