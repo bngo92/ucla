@@ -25,6 +25,7 @@
 
 //package edu.ucla.cs.cs144;
 
+import java.awt.print.PrinterGraphics;
 import java.io.*;
 import java.text.*;
 import java.util.*;
@@ -184,45 +185,43 @@ class MyParser {
         
         /**************************************************************/
 
-        PrintWriter printWriter = new PrintWriter("data.dat");
-        NodeList nlist = doc.getChildNodes();
-        for (int i = 0; i < nlist.getLength(); ++i) {
-            NodeList items = nlist.item(i).getChildNodes();
-            for (int j = 0; j < items.getLength(); ++j) {
-                Node item = items.item(j);
-                Node itemId = item.getAttributes().item(0);
-                printWriter.printf("%s,", itemId.getNodeValue());
-                NodeList fields = item.getChildNodes();
-                for (int k = 0; k < fields.getLength(); ++k) {
-                    Node field = fields.item(k);
-                    try {
-                        String s = getElementText((Element) field);
-                        printWriter.printf("%s,", s);
-                    } catch (Exception e) {
-                        NodeList bids = field.getChildNodes();
-                        for (int l = 0; l < bids.getLength(); ++l) {
-                            NodeList bid = bids.item(l).getChildNodes();
-                            for (int m = 0; m < bids.getLength(); ++m) {
-                                NodeList bidder = bid.item(m).getChildNodes();
-                                for (int n = 0; n < bidder.getLength(); ++n) {
-                                    Node bidThing = bid.item(n);
-                                    try {
-                                        printWriter.printf("%s,", bidThing.getAttributes().item(0).getNodeValue());
-                                        printWriter.printf("%s,", bidThing.getAttributes().item(1).getNodeValue());
-                                        NodeList bidField = bidThing.getChildNodes();
-                                        Node location = bidField.item(0);
-                                        printWriter.printf("%s,", getElementText((Element) location));
-                                        Node country = bidField.item(1);
-                                        printWriter.printf("%s,", getElementText((Element) country));
-                                    } catch (Exception e1) {
-                                        printWriter.printf("%s,", getElementText((Element) bidThing));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                printWriter.println("");
+        PrintWriter itemDat = new PrintWriter("Item.dat");
+        PrintWriter userDat = new PrintWriter("User.dat");
+        PrintWriter itemBidDat = new PrintWriter("ItemBid.dat");
+        PrintWriter itemCategoryDat = new PrintWriter("ItemCategory.dat");
+
+        Element root = doc.getDocumentElement();
+        Element[] items = getElementsByTagNameNR(root, "Item");
+        for (Element item : items) {
+            String itemId = item.getAttribute("ItemID");
+            String name = getElementTextByTagNameNR(item, "Name");
+            String currently = strip(getElementTextByTagNameNR(item, "Currently"));
+            String firstBid = strip(getElementTextByTagNameNR(item, "First_Bid"));
+            String started = getElementTextByTagNameNR(item, "Started");
+            String ends = getElementTextByTagNameNR(item, "Ends");
+            String description = getElementTextByTagNameNR(item, "Description");
+            itemDat.printf("%s,%s,%s,%s,%s,%s,%s\n", itemId, name, currently, firstBid, started, ends, description);
+
+            Element seller = getElementByTagNameNR(item, "Seller");
+            String userId = seller.getAttribute("UserID");
+            String rating = seller.getAttribute("Rating");
+            String location = getElementTextByTagNameNR(item, "Location");
+            String country = getElementTextByTagNameNR(item, "Country");
+            userDat.printf("%s,%s,%s,%s\n", userId, rating, location, country);
+
+            Element[] categories = getElementsByTagNameNR(item, "Category");
+            for (Element category : categories) {
+                String categoryName = getElementText(category);
+                itemCategoryDat.printf("%s,%s\n", itemId, categoryName);
+            }
+
+            Element bids = getElementByTagNameNR(item, "Bids");
+            for (Element bid : getElementsByTagNameNR(bids, "Bid")) {
+                Element bidder = getElementByTagNameNR(bid, "Bidder");
+                String bidderId = bidder.getAttribute("UserID");
+                String time = getElementTextByTagNameNR(bid, "Time");
+                String amount = strip(getElementTextByTagNameNR(bid, "Amount"));
+                itemBidDat.printf("%s,%s,%s,%s\n", itemId, bidderId, time, amount);
             }
         }
     }
