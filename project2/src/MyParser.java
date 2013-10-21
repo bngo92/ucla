@@ -156,6 +156,22 @@ class MyParser {
             return nf.format(am).substring(1);
         }
     }
+
+    static String formatDate(String date) {
+        if (date.equals(""))
+            return date;
+        else {
+            SimpleDateFormat inputFormat = new SimpleDateFormat("MMM-dd-yy HH:mm:ss");
+            try {
+                Date date1 = inputFormat.parse(date);
+                SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                return outputFormat.format(date1);
+            } catch (ParseException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
+        return "";
+    }
     
     /* Process one items-???.xml file.
      */
@@ -193,21 +209,21 @@ class MyParser {
         Element root = doc.getDocumentElement();
         Element[] items = getElementsByTagNameNR(root, "Item");
         for (Element item : items) {
-            String itemId = item.getAttribute("ItemID");
-            String name = getElementTextByTagNameNR(item, "Name");
-            String currently = strip(getElementTextByTagNameNR(item, "Currently"));
-            String firstBid = strip(getElementTextByTagNameNR(item, "First_Bid"));
-            String started = getElementTextByTagNameNR(item, "Started");
-            String ends = getElementTextByTagNameNR(item, "Ends");
-            String description = getElementTextByTagNameNR(item, "Description");
-            itemDat.printf("%s,%s,%s,%s,%s,%s,%s\n", itemId, name, currently, firstBid, started, ends, description);
-
             Element seller = getElementByTagNameNR(item, "Seller");
             String userId = seller.getAttribute("UserID");
             String rating = seller.getAttribute("Rating");
             String location = getElementTextByTagNameNR(item, "Location");
             String country = getElementTextByTagNameNR(item, "Country");
             userDat.printf("%s,%s,%s,%s\n", userId, rating, location, country);
+
+            String itemId = item.getAttribute("ItemID");
+            String name = getElementTextByTagNameNR(item, "Name");
+            String currently = strip(getElementTextByTagNameNR(item, "Currently"));
+            String firstBid = strip(getElementTextByTagNameNR(item, "First_Bid"));
+            String started = formatDate(getElementTextByTagNameNR(item, "Started"));
+            String ends = formatDate(getElementTextByTagNameNR(item, "Ends"));
+            String description = getElementTextByTagNameNR(item, "Description");
+            itemDat.printf("%s,%s,%s,%s,%s,%s,%s,%s\n", itemId, name, currently, firstBid, started, userId, ends, description);
 
             Element[] categories = getElementsByTagNameNR(item, "Category");
             for (Element category : categories) {
@@ -219,7 +235,7 @@ class MyParser {
             for (Element bid : getElementsByTagNameNR(bids, "Bid")) {
                 Element bidder = getElementByTagNameNR(bid, "Bidder");
                 String bidderId = bidder.getAttribute("UserID");
-                String time = getElementTextByTagNameNR(bid, "Time");
+                String time = formatDate(getElementTextByTagNameNR(bid, "Time"));
                 String amount = strip(getElementTextByTagNameNR(bid, "Amount"));
                 itemBidDat.printf("%s,%s,%s,%s\n", itemId, bidderId, time, amount);
             }
