@@ -3,6 +3,7 @@ CREATE TABLE User (
     Rating          INT NOT NULL,
     Location        VARCHAR(100),
     Country         VARCHAR(100)
+);
 
 CREATE TABLE Item (
     ItemID          INT Primary Key NOT NULL,
@@ -10,19 +11,19 @@ CREATE TABLE Item (
     Buy_Price       DECIMAL(8,2),
     First_Bid       DECIMAL(8,2) NOT NULL,
     Started         TIMESTAMP,
-    Seller          ForeignKey(UserID) references User.UserID,
+    Seller          VARCHAR(400),
     Ends            TIMESTAMP,
     Description     VARCHAR(4000)
 );
 
 CREATE TABLE ItemCategory ( 
-    ItemID          ForeignKey(ItemID) references Item(ItemID) Primary Key NOT NULL,
+    ItemID          VARCHAR(400),
     Category        VARCHAR(400) Primary Key NOT NULL
 );
 
 CREATE TABLE ItemBid ( 
-    ItemID          ForeignKey(ItemID) references Item(ItemID) Primary Key NOT NULL,
-    Bidder          ForeignKey(UserID) references User(UserID)Primary Key NOT NULL,
+    ItemID          VARCHAR(400),
+    Bidder          VARCHAR(400),
     Time            TIMESTAMP Primary Key NOT NULL,
     Amount          DECIMAL(8,2)
 );

@@ -25,7 +25,7 @@ FROM
         SELECT MAX(Amount) AS Amount
         FROM Item INNER JOIN ItemBid 
         USING (ItemID)
-        WHERE Started <  '2012-12-01 00:00:01' AND Ends > '2012-12-01 00:00:01');
+        WHERE Started <  '2001-12-20 00:00:01' AND Ends > '2001-12-20 00:00:01'
     ) AS Highest_Bid 
     INNER JOIN ItemBid 
     USING (Amount);
@@ -36,9 +36,11 @@ FROM Item INNER JOIN User
 ON Item.Seller = User.UserID;
 
 #num categories with at least one item with a bid of more than $100
-SELECT COUNT(CATEGORY)
+SELECT COUNT(*)
+FROM ( 
+SELECT Category 
 FROM ItemCategory INNER JOIN ItemBid 
 USING (ItemID)
 GROUP BY Category
-Having MAX(Amount)>100.00; 
+Having MAX(Amount)>100.00 ) AS foo;
 
