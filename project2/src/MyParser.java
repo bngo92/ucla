@@ -200,10 +200,10 @@ class MyParser {
         
         /**************************************************************/
 
-        PrintWriter itemDat = new PrintWriter(new FileOutputStream("Item.dat"), true);
-        PrintWriter userDat = new PrintWriter(new FileOutputStream("User.dat"), true);
-        PrintWriter itemBidDat = new PrintWriter(new FileOutputStream("ItemBid.dat"), true);
-        PrintWriter itemCategoryDat = new PrintWriter(new FileOutputStream("ItemCategory.dat"), true);
+        PrintWriter itemDat = new PrintWriter(new FileOutputStream(new File("Item.dat"), true));
+        PrintWriter userDat = new PrintWriter(new FileOutputStream(new File("User.dat"), true));
+        PrintWriter itemBidDat = new PrintWriter(new FileOutputStream(new File("ItemBid.dat"), true));
+        PrintWriter itemCategoryDat = new PrintWriter(new FileOutputStream(new File("ItemCategory.dat"), true));
 
         Element root = doc.getDocumentElement();
         Element[] items = getElementsByTagNameNR(root, "Item");
