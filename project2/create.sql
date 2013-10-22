@@ -17,13 +17,15 @@ CREATE TABLE Item (
 );
 
 CREATE TABLE ItemCategory ( 
-    ItemID          VARCHAR(400),
-    Category        VARCHAR(400) Primary Key NOT NULL
+    ItemID          VARCHAR(400) NOT NULL,
+    Category        VARCHAR(400) NOT NULL,
+    primary key (ItemID, Category)
 );
 
 CREATE TABLE ItemBid ( 
-    ItemID          VARCHAR(400),
-    Bidder          VARCHAR(400),
-    Time            TIMESTAMP Primary Key NOT NULL,
-    Amount          DECIMAL(8,2)
+    ItemID          VARCHAR(400) NOT NULL,
+    Bidder          VARCHAR(400) NOT NULL,
+    Time            TIMESTAMP NOT NULL,
+    Amount          DECIMAL(8,2) NOT NULL,
+    primary key (ItemID, Time)
 );

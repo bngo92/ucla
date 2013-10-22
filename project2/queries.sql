@@ -6,7 +6,7 @@ SELECT COUNT(*)
 FROM (SELECT Seller FROM Item) AS I 
     INNER JOIN User
     ON I.Seller=User.UserID
-WHERE User.Location="New York";
+WHERE binary User.Location="New York";
 
 # auctions with four categories
 SELECT COUNT(*) 
@@ -31,9 +31,15 @@ FROM
     USING (Amount);
 
 #num sellers
-SELECT COUNT(seller) 
-FROM Item INNER JOIN User
-ON Item.Seller = User.UserID;
+SELECT COUNT(*) 
+FROM ( SELECT DISTINCT seller FROM Item INNER JOIN User
+ON Item.Seller = User.UserID 
+WHERE User.Rating > 1000 ) AS foo;
+
+#num bidders and sellers 
+SELECT COUNT(*) 
+FROM (SELECT DISTINCT Seller FROM Item) AS i  INNER JOIN (SELECT DISTINCT Bidder FROM ItemBid) AS b
+ON i.Seller=b.Bidder;
 
 #num categories with at least one item with a bid of more than $100
 SELECT COUNT(*)

@@ -174,7 +174,7 @@ class MyParser {
     
     /* Process one items-???.xml file.
      */
-    static void processFile(File xmlFile) throws FileNotFoundException {
+    static void processFile(File xmlFile) {
         Document doc = null;
         try {
             doc = builder.parse(xmlFile);
@@ -200,49 +200,57 @@ class MyParser {
         
         /**************************************************************/
 
-        PrintWriter itemDat = new PrintWriter(new FileOutputStream(new File("Item.dat"), true));
-        PrintWriter userDat = new PrintWriter(new FileOutputStream(new File("User.dat"), true));
-        PrintWriter itemBidDat = new PrintWriter(new FileOutputStream(new File("ItemBid.dat"), true));
-        PrintWriter itemCategoryDat = new PrintWriter(new FileOutputStream(new File("ItemCategory.dat"), true));
+        try {
+            PrintWriter itemDat = new PrintWriter(new FileOutputStream(new File("Item.dat"), true));
+            PrintWriter userDat = new PrintWriter(new FileOutputStream(new File("User.dat"), true));
+            PrintWriter itemBidDat = new PrintWriter(new FileWriter(new File("ItemBid.dat"), true));
+            PrintWriter itemCategoryDat = new PrintWriter(new FileOutputStream(new File("ItemCategory.dat"), true));
 
-        Element root = doc.getDocumentElement();
-        Element[] items = getElementsByTagNameNR(root, "Item");
-        for (Element item : items) {
-            Element seller = getElementByTagNameNR(item, "Seller");
-            String userId = seller.getAttribute("UserID");
-            String rating = seller.getAttribute("Rating");
-            String location = getElementTextByTagNameNR(item, "Location");
-            String country = getElementTextByTagNameNR(item, "Country");
-            userDat.printf("%s,%s,%s,%s\n", userId, rating, location, country);
+            Element root = doc.getDocumentElement();
+            Element[] items = getElementsByTagNameNR(root, "Item");
+            for (Element item : items) {
+                Element seller = getElementByTagNameNR(item, "Seller");
+                String userId = seller.getAttribute("UserID");
+                String rating = seller.getAttribute("Rating");
+                String location = getElementTextByTagNameNR(item, "Location");
+                String country = getElementTextByTagNameNR(item, "Country");
+                userDat.printf("%s|*|%s|*|%s|*|%s\n", userId, rating, location, country);
 
-            String itemId = item.getAttribute("ItemID");
-            String name = getElementTextByTagNameNR(item, "Name");
-            String currently = strip(getElementTextByTagNameNR(item, "Currently"));
-            String firstBid = strip(getElementTextByTagNameNR(item, "First_Bid"));
-            String started = formatDate(getElementTextByTagNameNR(item, "Started"));
-            String ends = formatDate(getElementTextByTagNameNR(item, "Ends"));
-            String description = getElementTextByTagNameNR(item, "Description");
-            itemDat.printf("%s,%s,%s,%s,%s,%s,%s,%s\n", itemId, name, currently, firstBid, started, userId, ends, description);
+                String itemId = item.getAttribute("ItemID");
+                String name = getElementTextByTagNameNR(item, "Name");
+                String currently = strip(getElementTextByTagNameNR(item, "Currently"));
+                String firstBid = strip(getElementTextByTagNameNR(item, "First_Bid"));
+                String started = formatDate(getElementTextByTagNameNR(item, "Started"));
+                String ends = formatDate(getElementTextByTagNameNR(item, "Ends"));
+                String description = getElementTextByTagNameNR(item, "Description");
+                itemDat.printf("%s|*|%s|*|%s|*|%s|*|%s|*|%s|*|%s|*|%s\n", itemId, name, currently, firstBid, started, userId, ends, description);
 
-            Element[] categories = getElementsByTagNameNR(item, "Category");
-            for (Element category : categories) {
-                String categoryName = getElementText(category);
-                itemCategoryDat.printf("%s,%s\n", itemId, categoryName);
+                Element[] categories = getElementsByTagNameNR(item, "Category");
+                for (Element category : categories) {
+                    String categoryName = getElementText(category);
+                    itemCategoryDat.printf("%s|*|%s\n", itemId, categoryName);
+                }
+
+                Element bids = getElementByTagNameNR(item, "Bids");
+                for (Element bid : getElementsByTagNameNR(bids, "Bid")) {
+                    Element bidder = getElementByTagNameNR(bid, "Bidder");
+                    String bidderId = bidder.getAttribute("UserID");
+                    String bidderRating = bidder.getAttribute("Rating");
+                    String bidderLocation = getElementTextByTagNameNR(item, "Location");
+                    String bidderCountry = getElementTextByTagNameNR(item, "Country");
+                    userDat.printf("%s|*|%s|*|%s|*|%s\n", bidderId, bidderRating, bidderLocation, bidderCountry);
+
+                    String time = formatDate(getElementTextByTagNameNR(bid, "Time"));
+                    String amount = strip(getElementTextByTagNameNR(bid, "Amount"));
+                    itemBidDat.printf("%s|*|%s|*|%s|*|%s\n", itemId, bidderId, time, amount);
+                }
             }
-
-            Element bids = getElementByTagNameNR(item, "Bids");
-            for (Element bid : getElementsByTagNameNR(bids, "Bid")) {
-                Element bidder = getElementByTagNameNR(bid, "Bidder");
-                String bidderId = bidder.getAttribute("UserID");
-                String bidderRating = bidder.getAttribute("Rating");
-                String bidderLocation = getElementTextByTagNameNR(item, "Location");
-                String bidderCountry = getElementTextByTagNameNR(item, "Country");
-                userDat.printf("%s,%s,%s,%s\n", bidderId, bidderRating, bidderLocation, bidderCountry);
-
-                String time = formatDate(getElementTextByTagNameNR(bid, "Time"));
-                String amount = strip(getElementTextByTagNameNR(bid, "Amount"));
-                itemBidDat.printf("%s,%s,%s,%s\n", itemId, bidderId, time, amount);
-            }
+            itemDat.close();
+            userDat.close();
+            itemBidDat.close();
+            itemCategoryDat.close();
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
     
@@ -251,7 +259,7 @@ class MyParser {
         for(int i=0; i<4*level; i++)
             System.out.print(" ");
         
-        // dump out node name, type, and value  
+        // dump out node name, type, and value
         String ntype = typeName[n.getNodeType()];
         String nname = n.getNodeName();
         String nvalue = n.getNodeValue();
@@ -271,7 +279,7 @@ class MyParser {
             recursiveDescent(nlist.item(i), level+1);
     }  
     
-    public static void main (String[] args) throws FileNotFoundException {
+    public static void main (String[] args) {
         if (args.length == 0) {
             System.out.println("Usage: java MyParser [file] [file] ...");
             System.exit(1);
