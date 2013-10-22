@@ -3,7 +3,7 @@ SELECT COUNT(*) FROM User;
 
 #num sellers where location is New York
 SELECT COUNT(*) 
-FROM (SELECT Seller FROM Item) AS I 
+FROM (SELECT DISTINCT Seller FROM Item) AS I 
     INNER JOIN User
     ON I.Seller=User.UserID
 WHERE binary User.Location="New York";
