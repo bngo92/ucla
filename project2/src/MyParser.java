@@ -236,8 +236,8 @@ class MyParser {
                     Element bidder = getElementByTagNameNR(bid, "Bidder");
                     String bidderId = bidder.getAttribute("UserID");
                     String bidderRating = bidder.getAttribute("Rating");
-                    String bidderLocation = getElementTextByTagNameNR(item, "Location");
-                    String bidderCountry = getElementTextByTagNameNR(item, "Country");
+                    String bidderLocation = getElementTextByTagNameNR(bidder, "Location");
+                    String bidderCountry = getElementTextByTagNameNR(bidder, "Country");
                     userDat.printf("%s|*|%s|*|%s|*|%s\n", bidderId, bidderRating, bidderLocation, bidderCountry);
 
                     String time = formatDate(getElementTextByTagNameNR(bid, "Time"));
