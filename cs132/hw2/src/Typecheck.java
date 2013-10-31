@@ -12,7 +12,12 @@ public class Typecheck {
             // Build the symbol table.
             SymTableVis<Void, Integer> pv =
                     new SymTableVis<Void,Integer>();
-            root.accept(pv, 0);
+            try {
+                root.accept(pv, 0);
+            } catch (Exception e) {
+                System.out.println("Type error");
+                System.exit(0);
+            }
             HashMap<String, String> symt = pv.symt;
             // Do type checking.
             TypeCheckSimp ts = new TypeCheckSimp();
