@@ -21,7 +21,7 @@ public class Indexer {
 
     public IndexWriter getIndexWriter(boolean create) throws IOException {
         if (indexWriter == null) {
-            indexWriter = new IndexWriter("index-directory",new StandardAnalyzer(), create);
+            indexWriter = new IndexWriter(System.getenv("LUCENE_INDEX") + "/index-directory", new StandardAnalyzer(), create);
         }
         return indexWriter;
     }
