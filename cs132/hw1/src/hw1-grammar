@@ -1,0 +1,42 @@
+expr    ::= binexpr             first(binexpr)
+
+binexpr ::= preexpr binexpr'    first(preexpr)  follow(expr)
+
+binexpr'::= + preexpr binexpr'  +               follow(binexpr)
+binexpr'::= postexpr binexpr'   first(postexpr)
+binexpr'::= e                   e
+
+preexpr ::= ++ preexpr          ++              first(binexpr')
+preexpr ::= postexpr            first(postexpr) follow(binexpr')
+
+postexpr::= subexpr postexpr'   first(subexpr)  first(binexpr')
+                                                follow(binexpr')
+
+postexpr'::= ++ postexpr        ++              follow(postexpr)
+postexpr'::= e                  e
+
+subexpr ::= F blah subexpr      $               first(postexpr')
+subexpr ::= (binexpr)           (               follow(postexpr)
+subexpr ::= 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+
+blah   ::= ++ blah              ++              first(subexpr)
+blah   ::= e                    e
+
+expr        ++,--,F,(,n         $
+binexpr     ++,--,F,(,n         $,)
+binexpr'    +,-,e,F,(,n         $,)
+preexpr     ++,--,F,(,n         +,-,F,(,n,$,)
+postexpr    F,(,n               +,-,F,(,n,$,)
+postexpr'   ++,--,e             +,-,F,(,n,$,)
+subexpr     F,(,n               ++,--,+,-,F,(,n,$,)
+blah        ++,e                F,(,n
+
+            n       +       ++      F       (       )       $
+expr        1               1       1       1
+binexpr     1               1       1       1
+binexpr'    2       1       1       2       2       3       3
+preexpr     2               1       2       2
+postexpr    1                       1       1
+postexpr'   2       2       1       2       2       2       2
+subexpr     3                       1       2
+blah        2               1       2       2
