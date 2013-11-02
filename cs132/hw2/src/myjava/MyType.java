@@ -1,8 +1,6 @@
-package picojava;
+package myjava;
 
 import java.util.*;
-import syntaxtree.*;
-import visitor.*;
 
 /**
  * Example of a mini class to store type checking expressions. Stores

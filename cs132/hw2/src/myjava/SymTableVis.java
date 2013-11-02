@@ -1,4 +1,4 @@
-package picojava;
+package myjava;
 
 import java.util.*;
 import syntaxtree.*;
@@ -14,7 +14,7 @@ public class SymTableVis<R,A> extends GJDepthFirst<R,A> {
     public HashMap<String,String> symt = new HashMap<String,String>();
 
 
-    public R visit(VarDeclaration n, A argu) throws Exception {
+    public R visit(VarDeclaration n, A argu) {
         R _ret=null;
         System.out.println("Processing declaration");
 
@@ -28,8 +28,6 @@ public class SymTableVis<R,A> extends GJDepthFirst<R,A> {
 
         String id = n.f1.f0.tokenImage;
 
-        if (symt.get(id) != null)
-            throw new Exception();
         System.out.println("Inserting " + id + " -> " + type);
         // Safe?
         symt.put(id, type);

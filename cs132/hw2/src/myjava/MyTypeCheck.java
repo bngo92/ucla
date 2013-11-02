@@ -1,4 +1,4 @@
-package picojava;
+package myjava;
 
 import java.util.*;
 import syntaxtree.*;
@@ -14,32 +14,58 @@ import visitor.*;
  * use.
  *
  */
-public class TypeCheckSimp extends GJDepthFirst<MyType,HashMap<String,String>> {
+public class MyTypeCheck extends GJDepthFirst<MyType,HashMap<String,String>> {
 
     public MyType visit(Goal n, HashMap<String,String> arg) {
-        System.out.println("Visiting Goal");
-        MyType ret = n.f0.accept(this,arg);
-        System.out.println("Done Visiting Goal");
+        HashSet<String> classnames = new HashSet<String>();
+        classnames.add(n.f0.f1.f0.tokenImage);
+        for (Node node : n.f1.nodes) {
+            String s = ((ClassDeclaration) ((TypeDeclaration) node).f0.choice).f1.f0.tokenImage;
+            if (classnames.contains(s))
+                return null;
+            classnames.add(s);
+        }
 
+        MyType ret = n.f0.accept(this, arg);
+        if (ret == null)
+            return null;
+
+        for (Node node : n.f1.nodes) {
+            ret = node.accept(this, arg);
+            if (ret == null)
+                return null;
+        }
         return ret;
     }
 
     public MyType visit(MainClass n, HashMap<String,String> arg) {
-        System.out.println("Visiting Main");
-        MyType ret = n.f15.accept(this, arg); // Statement list
-        System.out.println("Done Visiting Main");
+        HashMap<String, String> ids = new HashMap<String, String>();
+        for (Node node : n.f14.nodes) {
+            VarDeclaration var = (VarDeclaration) node;
+            String id = var.f1.f0.tokenImage;
+            if (ids.containsKey(id))
+                return null;
+            String type = "";
+            switch (var.f0.f0.which) {
+                case 2:
+                    type = "Int"; break;
+                default:
+                    System.out.println("Unsupported case");
+            }
+            ids.put(id, type);
+        }
 
+        MyType ret = null;
+        for (Node node: n.f15.nodes) {
+            ret = node.accept(this, ids); // Statement list
+            if (ret == null)
+                return null;
+        }
         return ret;
     }
 
     public MyType visit(Statement n, HashMap<String,String> arg) {
-        System.out.println("Visiting statement");
-        MyType ret = n.f0.accept(this, arg);
-        System.out.println("Done Visiting statement");
-        // Type inference rule: n typechecks if its children typechecks
-        if (ret != null && ret.type_array.elementAt(0).compareTo("OK") == 0)
-            return ret;
-        return null;
+        return n.f0.accept(this, arg);
     }
 
 
@@ -50,14 +76,8 @@ public class TypeCheckSimp extends GJDepthFirst<MyType,HashMap<String,String>> {
      * f3 -> ";"
      */
     public MyType visit(AssignmentStatement n, HashMap<String,String> argu) {
-        System.out.println("Visiting AssignStatement");
-        // get the type of the lhs:
         MyType lhs = n.f0.accept(this, argu);
-        // get the type of the rhs:
         MyType rhs = n.f2.accept(this, argu);
-        System.out.println("Done Visiting AssignStatement");
-
-        // Type inference rule for assignment: type(id) = type(expr)
         if (lhs != null && rhs != null && lhs.checkIdentical(rhs))
             return new MyType("OK");
         return null;
@@ -120,7 +140,7 @@ public class TypeCheckSimp extends GJDepthFirst<MyType,HashMap<String,String>> {
         if (oper2 == null)
             System.out.println("Warning: oper2 does not typecheck");
 
-        // Type inference rule: oper1:int /\ oper2:int => oper1+oper2:int
+        // Type inference rule: oper1hint /\ oper2:int => oper1+oper2:int
         if (oper1 != null && oper2 != null && oper1.checkIdentical(oper2) && oper1.type_array.size() == 1)
             return oper1;
         return null;

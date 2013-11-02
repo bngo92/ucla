@@ -88,7 +88,7 @@ public interface GJVisitor<R,A> {
     * f1 -> Identifier()
     * f2 -> ";"
     */
-   public R visit(VarDeclaration n, A argu) throws Exception;
+   public R visit(VarDeclaration n, A argu);
 
    /**
     * f0 -> "public"

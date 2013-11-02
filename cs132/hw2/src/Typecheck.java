@@ -1,35 +1,29 @@
 import java.io.*;
-import visitor.*;
+
 import syntaxtree.*;
 import java.util.*;
-import picojava.*;
+import myjava.*;
 
 public class Typecheck {
     public static void main(String[] args) {
         Node root = null;
         try {
-            root = new MiniJavaParser(System.in).Goal();
+            //root = new MiniJavaParser(System.in).Goal();
+            root = new MiniJavaParser(new FileInputStream("C:/Users/Bryan/IdeaProjects/ucla/cs132/hw2/Miniexp.java")).Goal();
             // Build the symbol table.
-            SymTableVis<Void, Integer> pv =
-                    new SymTableVis<Void,Integer>();
-            try {
-                root.accept(pv, 0);
-            } catch (Exception e) {
-                System.out.println("Type error");
-                System.exit(0);
-            }
-            HashMap<String, String> symt = pv.symt;
+            HashMap<String, String> symt = new HashMap<String, String>();
             // Do type checking.
-            TypeCheckSimp ts = new TypeCheckSimp();
+            MyTypeCheck ts = new MyTypeCheck();
             MyType res = root.accept(ts, symt);
             if (res != null && res.type_array.size() > 0)
                 System.out.println("Code typechecks");
             else
                 System.out.println("Type error");
-        }
-        catch (ParseException e) {
+        } catch (ParseException e) {
             System.out.println(e.toString());
             System.exit(1);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
 }
