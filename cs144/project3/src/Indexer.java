@@ -21,7 +21,7 @@ public class Indexer {
 
     public IndexWriter getIndexWriter(boolean create) throws IOException {
         if (indexWriter == null) {
-            indexWriter = new IndexWriter(System.getenv("LUCENE_INDEX") + "/index-directory", new StandardAnalyzer(), create);
+            indexWriter = new IndexWriter(System.getenv("LUCENE_INDEX"), new StandardAnalyzer(), create);
         }
         return indexWriter;
     }
@@ -33,27 +33,25 @@ public class Indexer {
     }
 
     public void rebuildIndexes() throws IOException {
-
-        getIndexWriter(true);
-
         Connection conn;
         Statement stmt;
+        PreparedStatement preparedStatement;
 
         // create a connection to the database to retrieve Items from MySQL
         try {
             conn = DbManager.getConnection(true);
             stmt = conn.createStatement();
+            preparedStatement = conn.prepareStatement("SELECT Category FROM ItemCategory WHERE ItemID=?");
         } catch (SQLException ex) {
             System.out.println(ex);
             return;
         }
 
-
-
+        getIndexWriter(true);
         ResultSet rs;
         try {
             rs = stmt.executeQuery("SELECT ItemID, Name, Description FROM Item");
-            while(rs.next()) {
+            while (rs.next()) {
                 String itemID = rs.getInt("ItemID")+"";
                 IndexWriter writer = getIndexWriter(false);
                 Document doc = new Document();
@@ -63,22 +61,23 @@ public class Indexer {
                 String description = rs.getString("Description");
                 doc.add(new Field("Description", description, Field.Store.YES, Field.Index.TOKENIZED));
 
-                ResultSet cats = stmt.executeQuery("SELECT Category FROM ItemCategory WHERE itemID="+itemID);
-                String category = "";
+                preparedStatement.setString(1, itemID);
+                ResultSet cats = preparedStatement.executeQuery();
+                StringBuilder category = new StringBuilder();
                 while(cats.next()) {
-                    category = category +  " " + cats.getString("Category");
+                    category.append(" ").append(cats.getString("Category"));
                 }
-                doc.add(new Field("Category", category, Field.Store.NO, Field.Index.TOKENIZED));
+                doc.add(new Field("Category", category.toString(), Field.Store.NO, Field.Index.TOKENIZED));
 
                 doc.add(new Field("Content", name+category+description, Field.Store.NO, Field.Index.TOKENIZED));
 
                 writer.addDocument(doc);
-
             }
         } catch (SQLException e) {
             System.out.println(e);
-            return;
         }
+
+        closeIndexWriter();
         // close the database connection
         try {
             conn.close();
