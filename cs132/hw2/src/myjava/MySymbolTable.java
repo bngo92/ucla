@@ -1,217 +1,134 @@
 package myjava;
 
 import syntaxtree.*;
-import visitor.GJDepthFirst;
+import visitor.GJNoArguDepthFirst;
 
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
 
-public class MySymbolTable extends GJDepthFirst<Boolean, MyType> {
-    HashMap<String, MyType> typeTable;
-    MyType type = null;
-    String method = null;
+public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
+    final HashMap<String, MyType> classTable;
+    MyType classScope = null;
+    MyType.Method methodScope = null;
 
     public MySymbolTable() {
-        typeTable = new HashMap<String, MyType>();
-        typeTable.put(MyType.ARRAY.type, MyType.ARRAY);
-        typeTable.put(MyType.BOOLEAN.type, MyType.ARRAY);
-        typeTable.put(MyType.INTEGER.type, MyType.INTEGER);
+        classTable = new HashMap<String, MyType>();
+        classTable.put(MyType.ARRAY.name, MyType.ARRAY);
+        classTable.put(MyType.BOOLEAN.name, MyType.ARRAY);
+        classTable.put(MyType.INTEGER.name, MyType.INTEGER);
     }
 
-    public MyType isVar(String var) {
+    public void setClassScope(String classScope) {
+        this.classScope = classTable.get(classScope);
+    }
+
+    public void clearClassScope() {
+        this.classScope = null;
+    }
+
+    public MyType getVarType(String var) {
         MyType ret;
-        MyType node = type;
-        while (node != null) {
-            ret = node.methodVars.get(method).get(var);
+        MyType scope = classScope;
+        while (scope != null) {
+            ret = scope.methods.get(methodScope.name).getVarType(var);
             if (ret != null)
                 return ret;
-            ret = node.methodArgs.get(method).get(var);
+
+            ret = scope.vars.get(var);
             if (ret != null)
                 return ret;
-            ret = node.vars.get(var);
-            if (ret != null)
-                return ret;
-            node = node.parent;
+
+            scope = scope.parent;
         }
         return null;
     }
 
-    public void setType(String type) {
-        this.type = typeTable.get(type);
-    }
-
-    public void clearType() {
-        this.type = null;
-    }
-
-    public MyType getMethodType(MyType type, String method) {
-        MyType ret;
-        MyType node = type;
-        while (node != null) {
-            ret = node.methodTypes.get(method);
-            if (ret != null)
-                return ret;
-            node = node.parent;
-        }
-        return null;
-    }
-
-    public Collection<MyType> getMethodArgs(MyType type, String method) {
-        LinkedHashMap<String, MyType> ret;
-        MyType node = type;
-        while (node != null) {
-            ret = node.methodArgs.get(method);
-            if (ret != null)
-                return ret.values();
-            node = node.parent;
-        }
-        return null;
-    }
-
-    public boolean isSubclass(MyType child, MyType parent){
-        MyType node = child;
-        while (node != parent) {
-            node = node.parent;
-            if (node == null)
+    public boolean isSubclass(MyType child, MyType parent) {
+        while (child != parent) {
+            child = child.parent;
+            if (child == null)
                 return false;
         }
         return true;
     }
 
-    public boolean hasOverload() {
-        for (MyType type : typeTable.values()) {
-            MyType node = type.parent;
-            while (node != null) {
-                for (String method : type.methodArgs.keySet()) {
-                    if (!node.methodArgs.containsKey(method))
-                        continue;
-                    Iterator<MyType> iterator = node.methodArgs.get(method).values().iterator();
-                    for (MyType arg : type.methodArgs.get(method).values()) {
-                        if (!iterator.hasNext() || arg != iterator.next())
+    MyType addClass(String typename) {
+        MyType type = classTable.get(typename);
+        if (type == null) {
+            type = new MyType(typename);
+            classTable.put(typename, type);
+        } else if (!type.found)
+            type.found = true;
+        else
+            return null;
+        return type;
+    }
+
+    MyType addClass(String typename, String parent) {
+        MyType type = addClass(typename);
+        if (type == null)
+            return null;
+
+        type.parent = classTable.get(parent);
+        if (type.parent == null) {
+            type.parent = new MyType(parent);
+            type.parent.found = false;
+            classTable.put(parent, type.parent);
+        }
+        return type;
+    }
+
+    boolean addMethod(String method, MyType returnType) {
+        return classScope.addMethod(method, returnType) == null;
+    }
+
+    boolean addVar(String var, MyType varType) {
+        if (methodScope != null)
+            return methodScope.addVar(var, varType);
+        if (classScope.vars.containsKey(var))
+            return false;
+        classScope.vars.put(var, varType);
+        return true;
+    }
+
+    boolean addArg(String arg, MyType type) {
+        return methodScope.addArg(arg, type);
+    }
+
+    boolean hasOverload() {
+        for (MyType child : classTable.values()) {
+            MyType parent = child.parent;
+            while (parent != null) {
+                for (String method : child.methods.keySet()) {
+                    if (parent.methods.containsKey(method)) {
+                        Iterator<MyType> parentArgs = parent.getMethodArgs(method).iterator();
+                        for (MyType childArg : child.getMethodArgs(method)) {
+                            if (!parentArgs.hasNext() || childArg != parentArgs.next())
+                                return true;
+                        }
+                        if (parentArgs.hasNext())
                             return true;
                     }
-                    if (iterator.hasNext())
-                        return true;
                 }
-                node = node.parent;
+                parent = parent.parent;
             }
         }
         return false;
     }
 
-    MyType addType(String type) {
-        MyType node = typeTable.get(type);
-        if (node == null) {
-            node = new MyType(type);
-            typeTable.put(type, node);
-        } else if (!node.found)
-            node.found = true;
-        else
-            return null;
-        return node;
-    }
-
-    MyType addType(String child, String parent) {
-        MyType node = typeTable.get(child);
-        if (node == null) {
-            node = new MyType(child);
-            typeTable.put(child, node);
-        } else if (!node.found)
-            node.found = true;
-        else
-            return null;
-        node.parent = typeTable.get(parent);
-        if (node.parent == null) {
-            node.parent = new MyType(parent);
-            node.parent.found = false;
-        }
-        typeTable.put(child, node);
-        return node;
-    }
-
-    boolean addMethod(MyType type, String method, MyType methodType) {
-        if (type.methodTypes.containsKey(method))
-            return false;
-        type.methodTypes.put(method, methodType);
-        type.methodArgs.put(method, new LinkedHashMap<String, MyType>());
-        type.methodVars.put(method, new LinkedHashMap<String, MyType>());
-        return true;
-    }
-
-    boolean addVar(String var, MyType classType, MyType type) {
-        if (method == null) {
-            if (classType.vars.containsKey(var))
-                return false;
-            classType.vars.put(var, type);
-        } else {
-            if (classType.methodVars.containsKey(var))
-                return false;
-            classType.methodVars.get(method).put(var, type);
-        }
-        return true;
-    }
-
-    boolean addArg(String var, MyType classType, MyType type) {
-        LinkedHashMap<String, MyType> methodArgs = classType.methodArgs.get(method);
-        if (methodArgs.containsKey(var))
-            return false;
-        methodArgs.put(var, type);
-        return true;
-    }
-
     @Override
-    public Boolean visit(Goal n, MyType argu) {
-        if (n.f0.accept(this, argu) == null)
+    public Boolean visit(Goal n) {
+        if (n.f0.accept(this) == null)
             return null;
-        if (n.f1.accept(this, argu) == null)
+        if (n.f1.accept(this) == null)
             return null;
         if (hasOverload())
             return null;
-        for (MyType type : typeTable.values())
+        for (MyType type : classTable.values())
             if (!type.found)
                 return null;
         return true;
-    }
-
-    @Override
-    public Boolean visit(MainClass n, MyType argu) {
-        this.type = addType(n.f1.f0.tokenImage);
-        method = "main";
-        addMethod(this.type, method, MyType.TRUE);
-        Boolean ret = n.f14.accept(this, type);
-        method = null;
-        clearType();
-        return ret;
-    }
-
-    @Override
-    public Boolean visit(TypeDeclaration n, MyType argu) {
-        return n.f0.accept(this, argu);
-    }
-
-    @Override
-    public Boolean visit(ClassDeclaration n, MyType argu) {
-        MyType type = addType(n.f1.f0.tokenImage);
-        if (type == null)
-            return null;
-
-        // var declaration
-        if (n.f3.accept(this, type) == null)
-            return null;
-
-        return n.f4.accept(this, type);
-    }
-
-    @Override
-    public Boolean visit(ClassExtendsDeclaration n, MyType argu) {
-        MyType type = addType(n.f1.f0.tokenImage, n.f3.f0.tokenImage);
-        if (type == null)
-            return null;
-
-        // var declaration
-        if (n.f5.accept(this, type) == null)
-            return null;
-
-        return n.f6.accept(this, type);
     }
 
     MyType type(Type type) {
@@ -224,11 +141,11 @@ public class MySymbolTable extends GJDepthFirst<Boolean, MyType> {
                 return MyType.INTEGER;
             case 3:
                 String typename = ((Identifier) type.f0.choice).f0.tokenImage;
-                MyType ret = typeTable.get(typename);
+                MyType ret = classTable.get(typename);
                 if (ret == null) {
                     ret = new MyType(typename);
                     ret.found = false;
-                    typeTable.put(typename, ret);
+                    classTable.put(typename, ret);
                 }
                 return ret;
             default:
@@ -237,57 +154,98 @@ public class MySymbolTable extends GJDepthFirst<Boolean, MyType> {
     }
 
     @Override
-    public Boolean visit(VarDeclaration n, MyType argu) {
-        if (!addVar(n.f1.f0.tokenImage, argu, type(n.f0)))
-            return null;
-        return true;
-    }
-
-    @Override
-    public Boolean visit(MethodDeclaration n, MyType argu) {
-        if (!addMethod(argu, n.f2.f0.tokenImage, type(n.f1)))
-            return null;
-        method = n.f2.f0.tokenImage;
-        if (n.f4.accept(this, argu) == null)
-            return null;
-        Boolean ret = n.f7.accept(this, argu);
-        method = null;
+    public Boolean visit(MainClass n) {
+        classScope = addClass(n.f1.f0.tokenImage);
+        methodScope = classScope.addMethod("main", MyType.TRUE);
+        Boolean ret = n.f14.accept(this);
+        methodScope = null;
+        clearClassScope();
         return ret;
     }
 
     @Override
-    public Boolean visit(FormalParameterList n, MyType argu) {
-        if (n.f0.accept(this, argu) == null)
+    public Boolean visit(TypeDeclaration n) {
+        return n.f0.accept(this);
+    }
+
+    @Override
+    public Boolean visit(ClassDeclaration n) {
+        MyType type = addClass(n.f1.f0.tokenImage);
+        if (type == null)
             return null;
-        return n.f1.accept(this, argu);
-    }
 
-    @Override
-    public Boolean visit(FormalParameter n, MyType argu) {
-        if (!addArg(n.f1.f0.tokenImage, argu, type(n.f0)))
+        // var declaration
+        if (n.f3.accept(this) == null)
             return null;
-        return true;
+
+        return n.f4.accept(this);
     }
 
     @Override
-    public Boolean visit(FormalParameterRest n, MyType argu) {
-        return n.f1.accept(this, argu);
+    public Boolean visit(ClassExtendsDeclaration n) {
+        MyType type = addClass(n.f1.f0.tokenImage, n.f3.f0.tokenImage);
+        if (type == null)
+            return null;
+
+        // var declaration
+        if (n.f5.accept(this) == null)
+            return null;
+
+        return n.f6.accept(this);
     }
 
     @Override
-    public Boolean visit (NodeList n, MyType argu) {
-        for (Enumeration<Node> e = n.elements(); e.hasMoreElements();) {
-            if (e.nextElement().accept(this, argu) == null)
+    public Boolean visit(VarDeclaration n) {
+        if (addVar(n.f1.f0.tokenImage, type(n.f0)))
+            return true;
+        return null;
+    }
+
+    @Override
+    public Boolean visit(MethodDeclaration n) {
+        if (!addMethod(n.f2.f0.tokenImage, type(n.f1)))
+            return null;
+        methodScope = classScope.getMethod(n.f2.f0.tokenImage);
+        if (n.f4.accept(this) == null)
+            return null;
+        Boolean ret = n.f7.accept(this);
+        methodScope = null;
+        return ret;
+    }
+
+    @Override
+    public Boolean visit(FormalParameterList n) {
+        if (n.f0.accept(this) == null)
+            return null;
+        return n.f1.accept(this);
+    }
+
+    @Override
+    public Boolean visit(FormalParameter n) {
+        if (addArg(n.f1.f0.tokenImage, type(n.f0)))
+            return true;
+        return null;
+    }
+
+    @Override
+    public Boolean visit(FormalParameterRest n) {
+        return n.f1.accept(this);
+    }
+
+    @Override
+    public Boolean visit(NodeList n) {
+        for (Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+            if (e.nextElement().accept(this) == null)
                 return null;
         }
         return true;
     }
 
     @Override
-    public Boolean visit (NodeListOptional n, MyType argu) {
+    public Boolean visit(NodeListOptional n) {
         if (n.present()) {
-            for ( Enumeration<Node> e = n.elements(); e.hasMoreElements();) {
-                if (e.nextElement().accept(this, argu) == null)
+            for (Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
+                if (e.nextElement().accept(this) == null)
                     return null;
             }
         }
@@ -295,9 +253,9 @@ public class MySymbolTable extends GJDepthFirst<Boolean, MyType> {
     }
 
     @Override
-    public Boolean visit(NodeOptional n, MyType argu) {
+    public Boolean visit(NodeOptional n) {
         if (n.present())
-            return n.node.accept(this, argu);
+            return n.node.accept(this);
         return true;
     }
 }
