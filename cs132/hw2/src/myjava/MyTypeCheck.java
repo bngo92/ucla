@@ -4,206 +4,298 @@ import java.util.*;
 import syntaxtree.*;
 import visitor.*;
 
-/**
- * This class implements a basic type checker for Int expressions and
- * assignments. Supported expressions can have + and ( ).
- *
- * WARNING: THIS IS A SIMPLISTIC EXAMPLE you must carefully think
- * about the data structures you need to implement hw2, by no mean the
- * ones used in this example should be considered the ones you must
- * use.
- *
- */
-public class MyTypeCheck extends GJDepthFirst<MyType,HashMap<String,String>> {
+public class MyTypeCheck extends GJDepthFirst<MyType, MySymbolTable> {
 
-    public MyType visit(Goal n, HashMap<String,String> arg) {
-        HashSet<String> classnames = new HashSet<String>();
-        classnames.add(n.f0.f1.f0.tokenImage);
-        for (Node node : n.f1.nodes) {
-            String s = ((ClassDeclaration) ((TypeDeclaration) node).f0.choice).f1.f0.tokenImage;
-            if (classnames.contains(s))
-                return null;
-            classnames.add(s);
-        }
-
-        MyType ret = n.f0.accept(this, arg);
-        if (ret == null)
+    @Override
+    public MyType visit(Goal n, MySymbolTable argu) {
+        if (n.f0.accept(this, argu) == null)
             return null;
-
-        for (Node node : n.f1.nodes) {
-            ret = node.accept(this, arg);
-            if (ret == null)
-                return null;
-        }
-        return ret;
-    }
-
-    public MyType visit(MainClass n, HashMap<String,String> arg) {
-        HashMap<String, String> ids = new HashMap<String, String>();
-        for (Node node : n.f14.nodes) {
-            VarDeclaration var = (VarDeclaration) node;
-            String id = var.f1.f0.tokenImage;
-            if (ids.containsKey(id))
-                return null;
-            String type = "";
-            switch (var.f0.f0.which) {
-                case 2:
-                    type = "Int"; break;
-                default:
-                    System.out.println("Unsupported case");
-            }
-            ids.put(id, type);
-        }
-
-        MyType ret = null;
-        for (Node node: n.f15.nodes) {
-            ret = node.accept(this, ids); // Statement list
-            if (ret == null)
-                return null;
-        }
-        return ret;
-    }
-
-    public MyType visit(Statement n, HashMap<String,String> arg) {
-        return n.f0.accept(this, arg);
-    }
-
-
-    /**
-     * f0 -> Identifier()
-     * f1 -> "="
-     * f2 -> Expression()
-     * f3 -> ";"
-     */
-    public MyType visit(AssignmentStatement n, HashMap<String,String> argu) {
-        MyType lhs = n.f0.accept(this, argu);
-        MyType rhs = n.f2.accept(this, argu);
-        if (lhs != null && rhs != null && lhs.checkIdentical(rhs))
-            return new MyType("OK");
-        return null;
-    }
-
-
-    /**
-     * f0 -> AndExpression()
-     *       | CompareExpression()
-     *       | PlusExpression()
-     *       | MinusExpression()
-     *       | TimesExpression()
-     *       | ArrayLookup()
-     *       | ArrayLength()
-     *       | MessageSend()
-     *       | PrimaryExpression()
-     */
-    public MyType visit(Expression n, HashMap<String,String> argu) {
-        return n.f0.accept(this, argu);
-    }
-
-
-    /**
-     * f0 -> IntegerLiteral()
-     *       | TrueLiteral()
-     *       | FalseLiteral()
-     *       | Identifier()
-     *       | ThisExpression()
-     *       | ArrayAllocationExpression()
-     *       | AllocationExpression()
-     *       | NotExpression()
-     *       | BracketExpression()
-     */
-    public MyType visit(PrimaryExpression n, HashMap<String,String> argu) {
-        return n.f0.accept(this, argu);
-    }
-
-    /**
-     * f0 -> "("
-     * f1 -> Expression()
-     * f2 -> ")"
-     */
-    public MyType visit(BracketExpression n, HashMap<String,String> argu) {
         return n.f1.accept(this, argu);
     }
 
+    @Override
+    public MyType visit(MainClass n, MySymbolTable argu) {
+        argu.setType(n.f1.f0.tokenImage);
+        argu.method = "main";
+        MyType ret = n.f15.accept(this, argu);
+        argu.method = null;
+        argu.clearType();
+        return ret;
+    }
 
-    /**
-     * f0 -> PrimaryExpression()
-     * f1 -> "+"
-     * f2 -> PrimaryExpression()
-     */
-    public MyType visit(PlusExpression n, HashMap<String,String> argu) {
-        System.out.println("Visiting PlusExpression");
-        MyType oper1 = n.f0.accept(this, argu);
-        MyType oper2 = n.f2.accept(this, argu);
-        System.out.println("Done Visiting PlusExpression");
-        if (oper1 == null)
-            System.out.println("Warning: oper1 does not typecheck");
-        if (oper2 == null)
-            System.out.println("Warning: oper2 does not typecheck");
+    @Override
+    public MyType visit(ClassDeclaration n, MySymbolTable argu) {
+        argu.setType(n.f1.f0.tokenImage);
+        MyType ret = n.f4.accept(this, argu);
+        argu.clearType();
+        return ret;
+    }
 
-        // Type inference rule: oper1hint /\ oper2:int => oper1+oper2:int
-        if (oper1 != null && oper2 != null && oper1.checkIdentical(oper2) && oper1.type_array.size() == 1)
-            return oper1;
+    @Override
+    public MyType visit(ClassExtendsDeclaration n, MySymbolTable argu) {
+        argu.setType(n.f1.f0.tokenImage);
+        MyType ret = n.f6.accept(this, argu);
+        argu.clearType();
+        return ret;
+    }
+
+    @Override
+    public MyType visit(MethodDeclaration n, MySymbolTable argu) {
+        argu.method = n.f2.f0.tokenImage;
+        if (n.f8.accept(this, argu) == null)
+            return null;
+        MyType retType = n.f1.accept(this, argu);
+        MyType ret = n.f10.accept(this, argu);
+        if (retType != ret)
+            return null;
+        argu.method = null;
+        return MyType.TRUE;
+    }
+
+    @Override
+    public MyType visit(Type n, MySymbolTable argu) {
+        return n.f0.accept(this, argu);
+    }
+
+    @Override
+    public MyType visit(ArrayType n, MySymbolTable argu) {
+        return MyType.ARRAY;
+    }
+
+    @Override
+    public MyType visit(BooleanType n, MySymbolTable argu) {
+        return MyType.BOOLEAN;
+    }
+
+    @Override
+    public MyType visit(IntegerType n, MySymbolTable argu) {
+        return MyType.INTEGER;
+    }
+
+    @Override
+    public MyType visit(Block n, MySymbolTable argu) {
+        return n.f1.accept(this, argu);
+    }
+
+    @Override
+    public MyType visit(AssignmentStatement n, MySymbolTable argu) {
+        MyType lhs = n.f0.accept(this, argu);
+        MyType rhs = n.f2.accept(this, argu);
+        if (lhs != null && rhs != null && argu.isSubclass(rhs, lhs))
+            return MyType.TRUE;
         return null;
     }
 
-    /**
-     * f0 -> <INTEGER_LITERAL>
-     */
-    public MyType visit(IntegerLiteral n, HashMap<String,String> argu) {
-        return new MyType("Int");
+    @Override
+    public MyType visit(ArrayAssignmentStatement n, MySymbolTable argu) {
+        if (n.f1.accept(this, argu) == MyType.INTEGER &&
+                n.f2.accept(this, argu) == MyType.INTEGER &&
+                n.f5.accept(this, argu) == MyType.INTEGER)
+            return MyType.TRUE;
+        return null;
     }
 
-
-    /**
-     * f0 -> <IDENTIFIER>
-     */
-    public MyType visit(Identifier n, HashMap<String,String> argu) {
-        System.out.println("Visiting Identifier");
-        // get the id symbol string:
-        String sym = n.f0.tokenImage;
-        String type = argu.get(sym);
-        System.out.println(sym + " -> " + type);
-        return new MyType(type);
+    @Override
+    public MyType visit(IfStatement n, MySymbolTable argu) {
+        if (n.f2.accept(this, argu) == MyType.BOOLEAN &&
+                n.f4.accept(this, argu) != null &&
+                n.f6.accept(this, argu) != null)
+            return MyType.TRUE;
+        return null;
     }
 
+    @Override
+    public MyType visit(WhileStatement n, MySymbolTable argu) {
+        if (n.f2.accept(this, argu) == MyType.BOOLEAN &&
+                n.f4.accept(this, argu) != null)
+            return MyType.TRUE;
+        return null;
+    }
+
+    @Override
+    public MyType visit(PrintStatement n, MySymbolTable argu) {
+        if (n.f2.accept(this, argu) == MyType.INTEGER)
+            return MyType.TRUE;
+        return null;
+    }
+
+    @Override
+    public MyType visit(AndExpression n, MySymbolTable argu) {
+        if (n.f0.accept(this, argu) == MyType.BOOLEAN &&
+                n.f2.accept(this, argu) == MyType.BOOLEAN)
+            return MyType.TRUE;
+        return null;
+    }
+
+    @Override
+    public MyType visit(CompareExpression n, MySymbolTable argu) {
+        if (n.f0.accept(this, argu) == MyType.INTEGER &&
+                n.f2.accept(this, argu) == MyType.INTEGER)
+            return MyType.BOOLEAN;
+        return null;
+    }
+
+    @Override
+    public MyType visit(PlusExpression n, MySymbolTable argu) {
+        if (n.f0.accept(this, argu) == MyType.INTEGER &&
+                n.f2.accept(this, argu) == MyType.INTEGER)
+            return MyType.INTEGER;
+        return null;
+    }
+
+    @Override
+    public MyType visit(MinusExpression n, MySymbolTable argu) {
+        if (n.f0.accept(this, argu) == MyType.INTEGER &&
+                n.f2.accept(this, argu) == MyType.INTEGER)
+            return MyType.INTEGER;
+        return null;
+    }
+
+    @Override
+    public MyType visit(TimesExpression n, MySymbolTable argu) {
+        if (n.f0.accept(this, argu) == MyType.INTEGER &&
+                n.f2.accept(this, argu) == MyType.INTEGER)
+            return MyType.INTEGER;
+        return null;
+    }
+
+    @Override
+    public MyType visit(ArrayLookup n, MySymbolTable argu) {
+        if (n.f0.accept(this, argu) == MyType.ARRAY &&
+                n.f2.accept(this, argu) == MyType.INTEGER)
+            return MyType.INTEGER;
+        return null;
+    }
+
+    @Override
+    public MyType visit(ArrayLength n, MySymbolTable argu) {
+        if (n.f0.accept(this, argu) == MyType.ARRAY)
+            return MyType.INTEGER;
+        return null;
+    }
+
+    @Override
+    public MyType visit(MessageSend n, MySymbolTable argu) {
+        MyType type = n.f0.accept(this, argu);
+        if (type == null)
+            return null;
+
+        String method = n.f2.f0.tokenImage;
+        LinkedList<MyType> params = new LinkedList<MyType>(argu.getMethodArgs(method));
+
+        if (n.f4.present()) {
+            if (!params.isEmpty())
+                return null;
+
+            ExpressionList list = (ExpressionList) n.f4.node;
+            if (list.f0.accept(this, argu) != params.remove())
+                return null;
+
+            if (list.f1.present()) {
+                for (Node node : list.f1.nodes) {
+                    if (params.isEmpty())
+                        return null;
+                    if (node.accept(this, argu) != params.remove())
+                        return null;
+                }
+            }
+            if (!params.isEmpty())
+                return null;
+        }
+        return argu.getMethodType(method);
+    }
+
+    @Override
+    public MyType visit(IntegerLiteral n, MySymbolTable argu) {
+        return MyType.INTEGER;
+    }
+
+    @Override
+    public MyType visit(TrueLiteral n, MySymbolTable argu) {
+        return MyType.BOOLEAN;
+    }
+
+    @Override
+    public MyType visit(FalseLiteral n, MySymbolTable argu) {
+        return MyType.BOOLEAN;
+    }
+
+    @Override
+    public MyType visit(Identifier n, MySymbolTable argu) {
+        MyType ret = argu.isVar(n.f0.tokenImage);
+        if (ret != null)
+            return ret;
+        return argu.typeTable.get(n.f0.tokenImage);
+    }
+
+    @Override
+    public MyType visit(ThisExpression n, MySymbolTable argu) {
+        return argu.type;
+    }
+
+    @Override
+    public MyType visit(ArrayAllocationExpression n, MySymbolTable argu) {
+        if (n.f3.accept(this, argu) == MyType.INTEGER)
+            return MyType.ARRAY;
+        return null;
+    }
+
+    @Override
+    public MyType visit(AllocationExpression n, MySymbolTable argu) {
+        return n.f1.accept(this, argu);
+    }
+
+    @Override
+    public MyType visit(NotExpression n, MySymbolTable argu) {
+        if (n.f1.accept(this, argu) == MyType.BOOLEAN)
+            return MyType.BOOLEAN;
+        return null;
+    }
+
+    @Override
+    public MyType visit(BracketExpression n, MySymbolTable argu) {
+        return n.f1.accept(this, argu);
+    }
 
     //////////////////////////////////////
 
-    public MyType visit(NodeList n, HashMap<String,String> argu) {
-        System.out.println("Visiting nodelist");
-        MyType _ret = new MyType();
-        for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
-            MyType val = e.nextElement().accept(this,argu);
-            if (val != null && _ret != null)
-            {
-                _ret.type_array.ensureCapacity(val.type_array.size());
-                _ret.type_array.addAll(val.type_array);
-            }
-            else
-                _ret = null;
-        }
-        return _ret;
+    @Override
+    public MyType visit(TypeDeclaration n, MySymbolTable argu) {
+        return n.f0.choice.accept(this, argu);
     }
 
-    public MyType visit(NodeListOptional n, HashMap<String,String> argu) {
-        System.out.println("Visiting nodelistopt");
-        if ( n.present() ) {
-            MyType _ret = new MyType();
-            for ( Enumeration<Node> e = n.elements(); e.hasMoreElements(); ) {
-                MyType val = e.nextElement().accept(this,argu);
-                if (val != null && _ret != null)
-                {
-                    _ret.type_array.ensureCapacity(val.type_array.size());
-                    _ret.type_array.addAll(val.type_array);
-                }
-                else
-                    _ret = null;
-            }
-            return _ret;
-        }
-        else
-            return null;
+    @Override
+    public MyType visit(Statement n, MySymbolTable argu) {
+        return n.f0.choice.accept(this, argu);
     }
 
+    @Override
+    public MyType visit(Expression n, MySymbolTable argu) {
+        return n.f0.accept(this, argu);
+    }
 
+    @Override
+    public MyType visit(PrimaryExpression n, MySymbolTable argu) {
+        return n.f0.accept(this, argu);
+    }
+
+    @Override
+    public MyType visit(NodeList n, MySymbolTable argu) {
+        for (Enumeration<Node> e = n.elements(); e.hasMoreElements();) {
+            if (e.nextElement().accept(this, argu) == null)
+                return null;
+        }
+        return MyType.TRUE;
+    }
+
+    @Override
+    public MyType visit(NodeListOptional n, MySymbolTable argu) {
+        if (n.present()) {
+            for ( Enumeration<Node> e = n.elements(); e.hasMoreElements();) {
+                if (e.nextElement().accept(this, argu) == null)
+                    return null;
+            }
+        }
+        return MyType.TRUE;
+    }
 }
