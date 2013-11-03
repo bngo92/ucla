@@ -181,28 +181,30 @@ public class MyTypeCheck extends GJDepthFirst<MyType, MySymbolTable> {
             return null;
 
         String method = n.f2.f0.tokenImage;
-        LinkedList<MyType> params = new LinkedList<MyType>(argu.getMethodArgs(method));
+        Collection<MyType> params = argu.getMethodArgs(method);
 
         if (n.f4.present()) {
-            if (!params.isEmpty())
+            if (params == null)
                 return null;
+            LinkedList<MyType> queue = new LinkedList<MyType>(argu.getMethodArgs(method));
 
             ExpressionList list = (ExpressionList) n.f4.node;
-            if (list.f0.accept(this, argu) != params.remove())
+            if (list.f0.accept(this, argu) != queue.remove())
                 return null;
 
             if (list.f1.present()) {
                 for (Node node : list.f1.nodes) {
-                    if (params.isEmpty())
+                    if (queue.isEmpty())
                         return null;
-                    if (node.accept(this, argu) != params.remove())
+                    if (node.accept(this, argu) != queue.remove())
                         return null;
                 }
             }
-            if (!params.isEmpty())
+            if (!queue.isEmpty())
                 return null;
-        }
-        return argu.getMethodType(method);
+        } else if (params != null)
+            return null;
+        return argu.getMethodType(type, method);
     }
 
     @Override

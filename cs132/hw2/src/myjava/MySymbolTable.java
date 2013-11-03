@@ -43,7 +43,7 @@ public class MySymbolTable extends GJDepthFirst<Boolean, MyType> {
         this.type = null;
     }
 
-    public MyType getMethodType(String method) {
+    public MyType getMethodType(MyType type, String method) {
         MyType ret;
         MyType node = type;
         while (node != null) {
