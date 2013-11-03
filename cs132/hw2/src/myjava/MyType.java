@@ -36,7 +36,7 @@ public class MyType {
     Method getMethod(String method) {
         MyType type = this;
         while (type != null) {
-            Method ret = type.getMethod(method);
+            Method ret = type.methods.get(method);
             if (ret != null)
                 return ret;
             type = type.parent;

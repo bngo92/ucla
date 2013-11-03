@@ -80,7 +80,7 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
     }
 
     boolean addMethod(String method, MyType returnType) {
-        return classScope.addMethod(method, returnType) == null;
+        return classScope.addMethod(method, returnType) != null;
     }
 
     boolean addVar(String var, MyType varType) {
