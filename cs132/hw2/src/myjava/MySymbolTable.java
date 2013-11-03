@@ -55,7 +55,7 @@ public class MySymbolTable extends GJDepthFirst<Boolean, MyType> {
         return null;
     }
 
-    public Collection<MyType> getMethodArgs(String method) {
+    public Collection<MyType> getMethodArgs(MyType type, String method) {
         LinkedHashMap<String, MyType> ret;
         MyType node = type;
         while (node != null) {
@@ -240,8 +240,9 @@ public class MySymbolTable extends GJDepthFirst<Boolean, MyType> {
         method = n.f2.f0.tokenImage;
         if (n.f4.accept(this, argu) == null)
             return null;
+        Boolean ret = n.f7.accept(this, argu);
         method = null;
-        return n.f7.accept(this, argu);
+        return ret;
     }
 
     @Override

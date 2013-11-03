@@ -97,9 +97,12 @@ public class MyTypeCheck extends GJDepthFirst<MyType, MySymbolTable> {
 
     @Override
     public MyType visit(IfStatement n, MySymbolTable argu) {
-        if (n.f2.accept(this, argu) == MyType.BOOLEAN &&
-                n.f4.accept(this, argu) != null &&
-                n.f6.accept(this, argu) != null)
+        MyType conditional = n.f2.accept(this, argu);
+        MyType ifBlock = n.f4.accept(this, argu);
+        MyType elseBlock = n.f6.accept(this, argu);
+        if (conditional == MyType.BOOLEAN &&
+                ifBlock != null &&
+                elseBlock != null)
             return MyType.TRUE;
         return null;
     }
@@ -123,7 +126,7 @@ public class MyTypeCheck extends GJDepthFirst<MyType, MySymbolTable> {
     public MyType visit(AndExpression n, MySymbolTable argu) {
         if (n.f0.accept(this, argu) == MyType.BOOLEAN &&
                 n.f2.accept(this, argu) == MyType.BOOLEAN)
-            return MyType.TRUE;
+            return MyType.BOOLEAN;
         return null;
     }
 
@@ -181,12 +184,12 @@ public class MyTypeCheck extends GJDepthFirst<MyType, MySymbolTable> {
             return null;
 
         String method = n.f2.f0.tokenImage;
-        Collection<MyType> params = argu.getMethodArgs(method);
+        Collection<MyType> params = argu.getMethodArgs(type, method);
 
         if (n.f4.present()) {
             if (params == null)
                 return null;
-            LinkedList<MyType> queue = new LinkedList<MyType>(argu.getMethodArgs(method));
+            LinkedList<MyType> queue = new LinkedList<MyType>(params);
 
             ExpressionList list = (ExpressionList) n.f4.node;
             if (list.f0.accept(this, argu) != queue.remove())
@@ -202,7 +205,7 @@ public class MyTypeCheck extends GJDepthFirst<MyType, MySymbolTable> {
             }
             if (!queue.isEmpty())
                 return null;
-        } else if (params != null)
+        } else if (!params.isEmpty())
             return null;
         return argu.getMethodType(type, method);
     }
@@ -274,6 +277,11 @@ public class MyTypeCheck extends GJDepthFirst<MyType, MySymbolTable> {
     @Override
     public MyType visit(Expression n, MySymbolTable argu) {
         return n.f0.accept(this, argu);
+    }
+
+    @Override
+    public MyType visit(ExpressionRest n, MySymbolTable argu) {
+        return n.f1.accept(this, argu);
     }
 
     @Override
