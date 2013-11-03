@@ -79,7 +79,7 @@ public class MyType {
         }
 
         public boolean addVar(String var, MyType type) {
-            if (vars.containsKey(var))
+            if (args.containsKey(var) || vars.containsKey(var))
                 return false;
             vars.put(var, type);
             return true;

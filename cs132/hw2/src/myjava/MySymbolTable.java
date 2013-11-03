@@ -100,14 +100,17 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         for (MyType child : classTable.values()) {
             MyType parent = child.parent;
             while (parent != null) {
-                for (String method : child.methods.keySet()) {
-                    if (parent.methods.containsKey(method)) {
-                        Iterator<MyType> parentArgs = parent.getMethodArgs(method).iterator();
-                        for (MyType childArg : child.getMethodArgs(method)) {
+                for (MyType.Method childMethod : child.methods.values()) {
+                    MyType.Method parentMethod = parent.methods.get(childMethod.name);
+                    if (parentMethod != null) {
+                        Iterator<MyType> parentArgs = parentMethod.args.values().iterator();
+                        for (MyType childArg : childMethod.args.values()) {
                             if (!parentArgs.hasNext() || childArg != parentArgs.next())
                                 return true;
                         }
                         if (parentArgs.hasNext())
+                            return true;
+                        if (parent.methods.get(childMethod.name).returnType != childMethod.returnType)
                             return true;
                     }
                 }
@@ -157,6 +160,7 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
     public Boolean visit(MainClass n) {
         classScope = addClass(n.f1.f0.tokenImage);
         methodScope = classScope.addMethod("main", MyType.TRUE);
+        methodScope.addArg(n.f11.f0.tokenImage, MyType.TRUE);
         Boolean ret = n.f14.accept(this);
         methodScope = null;
         clearClassScope();

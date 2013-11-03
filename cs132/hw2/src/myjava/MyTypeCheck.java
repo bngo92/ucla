@@ -10,6 +10,7 @@ import java.util.LinkedList;
 public class MyTypeCheck extends GJNoArguDepthFirst<MyType> {
 
     private final MySymbolTable symbolTable;
+    boolean typeIdentifier = false;
 
     public MyTypeCheck(MySymbolTable symbolTable) {
         this.symbolTable = symbolTable;
@@ -63,7 +64,10 @@ public class MyTypeCheck extends GJNoArguDepthFirst<MyType> {
 
     @Override
     public MyType visit(Type n) {
-        return n.f0.accept(this);
+        typeIdentifier = true;
+        MyType ret = n.f0.accept(this);
+        typeIdentifier = false;
+        return ret;
     }
 
     @Override
@@ -236,10 +240,9 @@ public class MyTypeCheck extends GJNoArguDepthFirst<MyType> {
 
     @Override
     public MyType visit(Identifier n) {
-        MyType ret = symbolTable.getVarType(n.f0.tokenImage);
-        if (ret != null)
-            return ret;
-        return symbolTable.classTable.get(n.f0.tokenImage);
+        if (typeIdentifier)
+            return symbolTable.classTable.get(n.f0.tokenImage);
+        return symbolTable.getVarType(n.f0.tokenImage);
     }
 
     @Override
@@ -256,7 +259,10 @@ public class MyTypeCheck extends GJNoArguDepthFirst<MyType> {
 
     @Override
     public MyType visit(AllocationExpression n) {
-        return n.f1.accept(this);
+        typeIdentifier = true;
+        MyType ret = n.f1.accept(this);
+        typeIdentifier = false;
+        return ret;
     }
 
     @Override
