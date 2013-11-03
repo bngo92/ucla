@@ -8,7 +8,7 @@ public class Typecheck {
         Node root = null;
         try {
             //root = new MiniJavaParser(System.in).Goal();
-            root = new MiniJavaParser(new FileInputStream("C:/Users/Bryan/IdeaProjects/ucla/cs132/hw2/Factorial.java")).Goal();
+            root = new MiniJavaParser(new FileInputStream("C:/Users/Bryan/IdeaProjects/ucla/cs132/hw2/TreeVisitor.java")).Goal();
             // Build the symbol table.
             MySymbolTable pv = new MySymbolTable();
             if (root.accept(pv, null) == null) {

@@ -192,7 +192,7 @@ public class MyTypeCheck extends GJDepthFirst<MyType, MySymbolTable> {
             LinkedList<MyType> queue = new LinkedList<MyType>(params);
 
             ExpressionList list = (ExpressionList) n.f4.node;
-            if (list.f0.accept(this, argu) != queue.remove())
+            if (!argu.isSubclass(list.f0.accept(this, argu), queue.remove()))
                 return null;
 
             if (list.f1.present()) {

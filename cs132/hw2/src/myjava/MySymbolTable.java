@@ -84,7 +84,12 @@ public class MySymbolTable extends GJDepthFirst<Boolean, MyType> {
                 for (String method : type.methodArgs.keySet()) {
                     if (!node.methodArgs.containsKey(method))
                         continue;
-                    if (node.methodArgs.get(method).values() != type.methodArgs.get(method).values())
+                    Iterator<MyType> iterator = node.methodArgs.get(method).values().iterator();
+                    for (MyType arg : type.methodArgs.get(method).values()) {
+                        if (!iterator.hasNext() || arg != iterator.next())
+                            return true;
+                    }
+                    if (iterator.hasNext())
                         return true;
                 }
                 node = node.parent;
@@ -106,9 +111,14 @@ public class MySymbolTable extends GJDepthFirst<Boolean, MyType> {
     }
 
     MyType addType(String child, String parent) {
-        if (typeTable.containsKey(child))
+        MyType node = typeTable.get(child);
+        if (node == null) {
+            node = new MyType(child);
+            typeTable.put(child, node);
+        } else if (!node.found)
+            node.found = true;
+        else
             return null;
-        MyType node = new MyType(child);
         node.parent = typeTable.get(parent);
         if (node.parent == null) {
             node.parent = new MyType(parent);
