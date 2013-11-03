@@ -174,11 +174,13 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         if (type == null)
             return null;
 
-        // var declaration
+        classScope = type;
         if (n.f3.accept(this) == null)
             return null;
 
-        return n.f4.accept(this);
+        Boolean ret = n.f4.accept(this);
+        classScope = null;
+        return ret;
     }
 
     @Override
@@ -187,11 +189,12 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         if (type == null)
             return null;
 
-        // var declaration
+        classScope = type;
         if (n.f5.accept(this) == null)
             return null;
 
-        return n.f6.accept(this);
+        Boolean ret = n.f6.accept(this);
+        return ret;
     }
 
     @Override
