@@ -88,7 +88,7 @@ public class MyTypeCheck extends GJDepthFirst<MyType, MySymbolTable> {
 
     @Override
     public MyType visit(ArrayAssignmentStatement n, MySymbolTable argu) {
-        if (n.f1.accept(this, argu) == MyType.INTEGER &&
+        if (n.f0.accept(this, argu) == MyType.ARRAY &&
                 n.f2.accept(this, argu) == MyType.INTEGER &&
                 n.f5.accept(this, argu) == MyType.INTEGER)
             return MyType.TRUE;
