@@ -13,13 +13,16 @@ public class Typecheck {
             MySymbolTable pv = new MySymbolTable();
             if (root.accept(pv, null) == null) {
                 System.out.println("Type error");
+                System.exit(1);
             } else {
                 // Do type checking.
                 MyType res = root.accept(new MyTypeCheck(), pv);
-                if (res != null)
-                    System.out.println("Code typechecks");
-                else
+                if (res != null) {
+                    System.out.println("Program type checked successfully");
+                } else {
                     System.out.println("Type error");
+                    System.exit(1);
+                }
             }
         } catch (ParseException e) {
             System.out.println(e.toString());
