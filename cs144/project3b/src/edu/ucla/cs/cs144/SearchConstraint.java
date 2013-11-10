@@ -1,3 +1,5 @@
+package edu.ucla.cs.cs144;
+
 public class SearchConstraint {
 	private String fieldName;
 	private String value;
