@@ -1,3 +1,5 @@
+package edu.ucla.cs.cs144;
+
 public class AuctionSearchTest {
 	public static void main(String[] args1)
 	{

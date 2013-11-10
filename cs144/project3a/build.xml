@@ -30,7 +30,7 @@
     </target>    
 
     <target name="run" depends="compile">
-        <java classname="AuctionSearchTest" failonerror="true" fork="yes">
+        <java classname="edu.ucla.cs.cs144.AuctionSearchTest" failonerror="true" fork="yes">
             <classpath refid="classpath"/>
             <jvmarg value="-DLUCENE_INDEX=${env.LUCENE_INDEX}"/>
         </java>

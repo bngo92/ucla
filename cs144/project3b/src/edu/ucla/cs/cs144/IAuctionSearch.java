@@ -1,3 +1,5 @@
+package edu.ucla.cs.cs144;
+
 public interface IAuctionSearch {
 	
 	/**
@@ -7,9 +9,9 @@ public interface IAuctionSearch {
 	 * @param numResultsToSkip The desired number of results to skip from 
 	 * the beginning of the full results.
 	 * @param numResultsToReturn The desired number of results to return.
-	 * @return An array of at most numResultsToReturn SearchResult objects 
+	 * @return An array of at most numResultsToReturn edu.ucla.cs.cs144.SearchResult objects
 	 * representing the results of the query after skipping numResultsToSkip
-	 * SearchResult objects.
+	 * edu.ucla.cs.cs144.SearchResult objects.
 	 */
 	public SearchResult[] basicSearch(String query, int numResultsToSkip, 
 			int numResultsToReturn);
@@ -17,14 +19,14 @@ public interface IAuctionSearch {
 	/**
 	 * Performs a search over the AND of all of the SearchConstraints. 
 	 * 
-	 * @param constraints An array of SearchConstraint objects representing the
+	 * @param constraints An array of edu.ucla.cs.cs144.SearchConstraint objects representing the
 	 * desired query.
 	 * @param numResultsToSkip The desired number of results to skip from 
 	 * the beginning of the full results.
 	 * @param numResultsToReturn The desired number of results to return.
-	 * @return An array of at most numResultsToReturn SearchResult objects 
+	 * @return An array of at most numResultsToReturn edu.ucla.cs.cs144.SearchResult objects
 	 * representing the results of the query after skipping numResultsToSkip
-	 * SearchResult objects.
+	 * edu.ucla.cs.cs144.SearchResult objects.
 	 */
 	public SearchResult[] advancedSearch(SearchConstraint[] constraints, 
 			int numResultsToSkip, int numResultsToReturn);

@@ -1,3 +1,5 @@
+package edu.ucla.cs.cs144;
+
 public class FieldName {
 	public static final String ItemName = "ItemName";	// java.lang.String
 	public static final String Category = "Category";	// java.lang.String
