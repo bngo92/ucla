@@ -218,12 +218,12 @@ class MyParser {
 
                 String itemId = item.getAttribute("ItemID");
                 String name = getElementTextByTagNameNR(item, "Name");
-                String currently = strip(getElementTextByTagNameNR(item, "Currently"));
+                String buyPrice = strip(getElementTextByTagNameNR(item, "Buy_Price"));
                 String firstBid = strip(getElementTextByTagNameNR(item, "First_Bid"));
                 String started = formatDate(getElementTextByTagNameNR(item, "Started"));
                 String ends = formatDate(getElementTextByTagNameNR(item, "Ends"));
                 String description = getElementTextByTagNameNR(item, "Description");
-                itemDat.printf("%s|*|%s|*|%s|*|%s|*|%s|*|%s|*|%s|*|%s\n", itemId, name, currently, firstBid, started, userId, ends, description);
+                itemDat.printf("%s|*|%s|*|%s|*|%s|*|%s|*|%s|*|%s|*|%s\n", itemId, name, buyPrice, firstBid, started, userId, ends, description);
 
                 Element[] categories = getElementsByTagNameNR(item, "Category");
                 for (Element category : categories) {

@@ -69,7 +69,7 @@ public class Indexer {
                 }
                 doc.add(new Field("Category", category.toString(), Field.Store.NO, Field.Index.TOKENIZED));
 
-                doc.add(new Field("Content", name+category+description, Field.Store.NO, Field.Index.TOKENIZED));
+                doc.add(new Field("Content", name+" "+category+" "+description, Field.Store.NO, Field.Index.TOKENIZED));
 
                 writer.addDocument(doc);
             }
