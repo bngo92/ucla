@@ -330,13 +330,15 @@ public class AuctionSearch implements IAuctionSearch {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
                 transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+                transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
                 StringWriter writer = new StringWriter();
                 try {
                     transformer.transform(new DOMSource(doc), new StreamResult(writer));
                 } catch (TransformerException e) {
                     e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
-                return writer.getBuffer().toString().replaceAll("\n|\r", "");
+                return writer.getBuffer().toString();
             } else {
                 return "";
             }
