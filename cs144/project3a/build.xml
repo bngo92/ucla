@@ -3,7 +3,7 @@
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="src-dir" location="src" />
     <property name="obj-dir" location="bin" />
-    <property name="lib-dir" location="lib" />
+    <property name="lib-dir" location="../lib" />
     <property name="extlib-dir" location="/usr/local/share/java" />
 
     <property environment="env" />
