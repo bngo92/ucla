@@ -15,6 +15,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.sql.*;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -128,16 +130,11 @@ public class AuctionSearch implements IAuctionSearch {
                     rootElement.appendChild(category);
                 }
 
-                Element currently = doc.createElement("Currently");
-                currently.appendChild(doc.createTextNode(rs.getString("Currently")));
-                rootElement.appendChild(currently);
-
-                Element firstBid = doc.createElement("FirstBid");
-                firstBid.appendChild(doc.createTextNode(rs.getString("FirstBid")));
-                rootElement.appendChild(firstBid);
-
                 ArrayList<Element> bidArray = new ArrayList<Element>();
                 ResultSet bids = bidStatement.executeQuery();
+                double maxAmount = 0;
+                DecimalFormat df = new DecimalFormat("$#.00");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMM-dd-yy HH:mm:ss");
                 while (bids.next()) {
                     Element bid = doc.createElement("Bid");
                     bidArray.add(bid);
@@ -150,22 +147,38 @@ public class AuctionSearch implements IAuctionSearch {
                     bidder.setAttribute("Rating", bidderAttributes.getString("Rating"));
                     bid.appendChild(bidder);
 
-                    Element location = doc.createElement("Location");
-                    location.appendChild(doc.createTextNode(bidderAttributes.getString("Location")));
-                    bidder.appendChild(location);
+                    if (bidderAttributes.getString("Location") != null) {
+                        Element location = doc.createElement("Location");
+                        location.appendChild(doc.createTextNode(bidderAttributes.getString("Location")));
+                        bidder.appendChild(location);
+                    }
 
-                    Element country = doc.createElement("Country");
-                    country.appendChild(doc.createTextNode(bidderAttributes.getString("Country")));
-                    bidder.appendChild(country);
+                    if (bidderAttributes.getString("Country") != null) {
+                        Element country = doc.createElement("Country");
+                        country.appendChild(doc.createTextNode(bidderAttributes.getString("Country")));
+                        bidder.appendChild(country);
+                    }
 
                     Element time = doc.createElement("Time");
-                    time.appendChild(doc.createTextNode(bids.getString("Time")));
+                    time.appendChild(doc.createTextNode(dateFormat.format(bids.getTime("Time"))));
                     bid.appendChild(time);
 
                     Element amount = doc.createElement("Amount");
-                    amount.appendChild(doc.createTextNode(bids.getString("Amount")));
+
+                    amount.appendChild(doc.createTextNode(df.format(bids.getDouble("Amount"))));
                     bid.appendChild(amount);
+                    if(bids.getDouble("Amount")>maxAmount)
+                        maxAmount = bids.getDouble("Amount");
+
                 }
+
+                Element currently = doc.createElement("Currently");
+                currently.appendChild(doc.createTextNode(df.format(maxAmount)));
+                rootElement.appendChild(currently);
+
+                Element firstBid = doc.createElement("FirstBid");
+                firstBid.appendChild(doc.createTextNode(df.format(rs.getDouble("FirstBid"))));
+                rootElement.appendChild(firstBid);
 
                 Element numberOfBids = doc.createElement("Number_of_Bids");
                 numberOfBids.appendChild(doc.createTextNode(bidArray.size() + ""));
@@ -174,7 +187,7 @@ public class AuctionSearch implements IAuctionSearch {
                 for (Element bid : bidArray)
                     rootElement.appendChild(bid);
 
-                userStatement.setString(1, rs.getString("UserID"));
+                userStatement.setString(1, rs.getString("Seller"));
                 ResultSet sellerAttributes = userStatement.executeQuery();
 
                 Element location = doc.createElement("Location");
