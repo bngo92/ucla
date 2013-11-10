@@ -17,6 +17,7 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 public class AuctionSearch implements IAuctionSearch {
 
@@ -81,91 +83,97 @@ public class AuctionSearch implements IAuctionSearch {
     public SearchResult[] advancedSearch(SearchConstraint[] constraints,
                                          int numResultsToSkip, int numResultsToReturn) {
         HashSet<SearchResult> results = new HashSet<SearchResult>();
-        boolean first = true;
         for (SearchConstraint searchConstraint : constraints) {
-            if (first) {
-                first = false;
-                String searchConstraintField = searchConstraint.getFieldName();
-                if (searchConstraintField.equals(FieldName.Description)
-                        || searchConstraintField.equals(FieldName.Category)
-                        || searchConstraintField.equals(FieldName.ItemName)
-                        || searchConstraintField.equals("Content")) {
-                    IndexSearcher searcher;
-                    QueryParser parser;
-                    Query query;
-                    Hits hits;
-                    try {
-                        searcher = new IndexSearcher(System.getenv("LUCENE_INDEX"));
-                        parser = new QueryParser(fieldNameMap.get(searchConstraint.getFieldName()), new StandardAnalyzer());
-                        query = parser.parse(searchConstraint.getValue());
-                        hits = searcher.search(query);
-                    } catch (IOException e) {
-                        return null;
-                    } catch (ParseException e) {
-                        return null;
-                    }
+            String searchConstraintField = searchConstraint.getFieldName();
+            if (searchConstraintField.equals(FieldName.Description)
+                    || searchConstraintField.equals(FieldName.Category)
+                    || searchConstraintField.equals(FieldName.ItemName)
+                    || searchConstraintField.equals(FieldName.SellerId)
+                    || searchConstraintField.equals(FieldName.BidderId)
+                    || searchConstraintField.equals("Content")) {
+                IndexSearcher searcher;
+                QueryParser parser;
+                Query query;
+                Hits hits;
+                try {
+                    searcher = new IndexSearcher(System.getenv("LUCENE_INDEX"));
+                    parser = new QueryParser(fieldNameMap.get(searchConstraint.getFieldName()), new StandardAnalyzer());
+                    query = parser.parse(searchConstraint.getValue());
+                    hits = searcher.search(query);
+                } catch (IOException e) {
+                    return null;
+                } catch (ParseException e) {
+                    return null;
+                }
 
-                    int stop = numResultsToSkip + numResultsToReturn;
-                    if (results.isEmpty()) {
-                        for (int i = numResultsToSkip; (numResultsToReturn == 0 || (i < stop)) && i < hits.length(); i++) {
-                            Document doc;
-                            try {
-                                doc = hits.doc(i);
-                            } catch (IOException e) {
-                                break;
-                            }
-                            results.add(new SearchResult(doc.get("ID"), doc.get(fieldNameMap.get(FieldName.ItemName))));
+                int stop = numResultsToSkip + numResultsToReturn;
+                if (results.isEmpty()) {
+                    for (int i = numResultsToSkip; (numResultsToReturn == 0 || (i < stop)) && i < hits.length(); i++) {
+                        Document doc;
+                        try {
+                            doc = hits.doc(i);
+                        } catch (IOException e) {
+                            break;
                         }
-                    } else {
-                        HashSet<String> validIds = new HashSet<String>();
-                        for (int i = numResultsToSkip; (numResultsToReturn == 0 || (i < stop)) && i < hits.length(); i++) {
-                            Document doc;
-                            try {
-                                doc = hits.doc(i);
-                            } catch (IOException e) {
-                                break;
-                            }
-                            validIds.add(doc.get("ID"));
-                        }
-                        for (SearchResult searchResult : results)
-                            if (!validIds.contains(searchResult.getItemId()))
-                                results.remove(searchResult);
+                        results.add(new SearchResult(doc.get("ID"), doc.get(fieldNameMap.get(FieldName.ItemName))));
                     }
                 } else {
-                    Connection conn;
-                    PreparedStatement stmt;
-
-                    try {
-                        conn = DbManager.getConnection(true);
-                        String statement = "SELECT * FROM Item WHERE " + fieldNameMap.get(searchConstraint.getFieldName()) + "=?";
-                        stmt = conn.prepareStatement(statement);
-                        if (searchConstraint.getFieldName().equals(FieldName.BuyPrice)) {
-                            stmt.setDouble(1, Double.valueOf(searchConstraint.getValue()));
-                        } else {
-                            SimpleDateFormat sqlFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                            try {
-                                stmt.setString(1, sqlFormat.format(xmlFormat.parse(searchConstraint.getValue())));
-                            } catch (java.text.ParseException e) {
-                                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                            }
+                    HashSet<String> validIds = new HashSet<String>();
+                    for (int i = numResultsToSkip; (numResultsToReturn == 0 || (i < stop)) && i < hits.length(); i++) {
+                        Document doc;
+                        try {
+                            doc = hits.doc(i);
+                        } catch (IOException e) {
+                            break;
                         }
-                        ResultSet rs = stmt.executeQuery();
-                        if (results.isEmpty())
-                            while (rs.next())
-                                results.add(new SearchResult(rs.getString("ItemID"), rs.getString("Name")));
-                        else {
-                            HashSet<String> validIds = new HashSet<String>();
-                            while (rs.next())
-                                validIds.add(rs.getString("ItemID"));
-                            for (SearchResult searchResult : results)
-                                if (!validIds.contains(searchResult.getItemId()))
-                                    results.remove(searchResult);
-                        }
-                    } catch (SQLException e) {
-                        System.out.println("HAPPY BIRTHDAY JENNIFER");
-                        e.printStackTrace();
-                        break;
+                        validIds.add(doc.get("ID"));
                     }
+                    Iterator<SearchResult> resultsIt = results.iterator();
+                    while (resultsIt.hasNext()) {
+                        SearchResult searchResult = resultsIt.next();
+                        if (!validIds.contains(searchResult.getItemId()))
+                            resultsIt.remove();
+                    }
+                    System.out.println("VALID ID'S: "+validIds.size());
+                    System.out.println("HITS LENGTH: "+hits.length());
+                }
+            } else {
+                Connection conn;
+                PreparedStatement stmt;
+
+                try {
+                    conn = DbManager.getConnection(true);
+                    String statement = "SELECT * FROM Item WHERE " + fieldNameMap.get(searchConstraint.getFieldName()) + "=?";
+                    stmt = conn.prepareStatement(statement);
+                    if (searchConstraint.getFieldName().equals(FieldName.BuyPrice)) {
+                        stmt.setDouble(1, Double.valueOf(searchConstraint.getValue()));
+                    } else {
+                        SimpleDateFormat sqlFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        try {
+                            stmt.setString(1, sqlFormat.format(xmlFormat.parse(searchConstraint.getValue())));
+                        } catch (java.text.ParseException e) {
+                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        }
+                    }
+                    ResultSet rs = stmt.executeQuery();
+                    if (results.isEmpty())
+                        while (rs.next())
+                            results.add(new SearchResult(rs.getString("ItemID"), rs.getString("Name")));
+                    else {
+                        HashSet<String> validIds = new HashSet<String>();
+                        while (rs.next())
+                            validIds.add(rs.getString("ItemID"));
+                        Iterator<SearchResult> resultsIt = results.iterator();
+                        while (resultsIt.hasNext())
+                        {
+                            SearchResult searchResult = resultsIt.next();
+                            if (!validIds.contains(searchResult.getItemId()))
+                                resultsIt.remove();
+                        }
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    break;
                 }
             }
         }

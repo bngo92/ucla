@@ -55,7 +55,7 @@ public class AuctionSearchTest {
         }
 
         constraint1 = new SearchConstraint(FieldName.ItemName, "Precious Moments");
-        constraint2 = new SearchConstraint(FieldName.Category, "waltera317a");
+        constraint2 = new SearchConstraint(FieldName.SellerId, "waltera317a");
         constraints = new SearchConstraint[]{constraint1, constraint2};
         advancedResults = as.advancedSearch(constraints, 0, 0);
         System.out.println("Advanced Search");
