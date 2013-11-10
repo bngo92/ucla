@@ -3,7 +3,7 @@
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="src-dir" location="src" />
     <property name="obj-dir" location="bin" />
-    <property name="lib-dir" location="lib" />
+    <property name="lib-dir" location="../lib" />
     <property name="extlib-dir" location="/usr/local/share/java" />
 
     <property environment="env" />
@@ -30,7 +30,7 @@
     </target>    
 
     <target name="run" depends="compile">
-        <java classname="Indexer" failonerror="true" fork="yes">
+        <java classname="AuctionSearchTest" failonerror="true" fork="yes">
             <classpath refid="classpath"/>
             <jvmarg value="-DLUCENE_INDEX=${env.LUCENE_INDEX}"/>
         </java>

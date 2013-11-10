@@ -3,14 +3,19 @@ import myjava.MyType;
 import myjava.MyTypeCheck;
 import syntaxtree.Node;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
 public class Typecheck {
     public static void main(String[] args) {
         Node root = null;
         try {
-            root = new MiniJavaParser(System.in).Goal();
+            root = new MiniJavaParser(new FileInputStream("Miniexp.java")).Goal();
         } catch (ParseException e) {
             System.out.println(e.toString());
             System.exit(1);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         // Build the symbol table.
         MySymbolTable pv = new MySymbolTable();
