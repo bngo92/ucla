@@ -88,8 +88,6 @@ public class AuctionSearch implements IAuctionSearch {
             if (searchConstraintField.equals(FieldName.Description)
                     || searchConstraintField.equals(FieldName.Category)
                     || searchConstraintField.equals(FieldName.ItemName)
-                    || searchConstraintField.equals(FieldName.SellerId)
-                    || searchConstraintField.equals(FieldName.BidderId)
                     || searchConstraintField.equals("Content")) {
                 IndexSearcher searcher;
                 QueryParser parser;
@@ -147,13 +145,15 @@ public class AuctionSearch implements IAuctionSearch {
                     stmt = conn.prepareStatement(statement);
                     if (searchConstraint.getFieldName().equals(FieldName.BuyPrice)) {
                         stmt.setDouble(1, Double.valueOf(searchConstraint.getValue()));
-                    } else {
+                    } else if (searchConstraint.getFieldName().equals(FieldName.EndTime)) {
                         SimpleDateFormat sqlFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                         try {
                             stmt.setString(1, sqlFormat.format(xmlFormat.parse(searchConstraint.getValue())));
                         } catch (java.text.ParseException e) {
                             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                         }
+                    } else {
+                        stmt.setString(1, searchConstraint.getValue());
                     }
                     ResultSet rs = stmt.executeQuery();
                     if (results.isEmpty())
