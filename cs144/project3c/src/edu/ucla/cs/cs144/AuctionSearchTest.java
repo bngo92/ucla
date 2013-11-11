@@ -34,6 +34,12 @@ public class AuctionSearchTest {
 
 		// Add your own test here
 
+        itemId = "1497497054";
+        item = as.getXMLDataForItemId(itemId);
+        System.out.println("XML data for ItemId: " + itemId);
+        System.out.println(item);
+
+        /*
         query = "kitchenware";
         basicResults = as.basicSearch(query, 0, 0);
         System.out.println("Basic Search Query: " + query);
@@ -73,7 +79,7 @@ public class AuctionSearchTest {
             //System.out.println(result.getItemId() + ": " + result.getName());
         //}
 
-
+        */
 
 	}
 }
