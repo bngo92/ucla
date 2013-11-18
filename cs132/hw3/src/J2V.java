@@ -10,7 +10,7 @@ import java.util.LinkedHashMap;
 public class J2V extends DepthFirstVisitor {
     public static void main(String[] args) {
         try {
-            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/LinearSearch.java")).Goal();
+            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/LinkedList.java")).Goal();
             root.accept(new J2V());
         } catch (ParseException e) {
             System.out.println(e.toString());
@@ -73,6 +73,8 @@ public class J2V extends DepthFirstVisitor {
         strings = new ArrayDeque<String>();
         n.f0.accept(this);
         n.f1.accept(this);
+        if (n.f1.present())
+            System.out.println("");
 
         if (allocArray) {
             print("func AllocArray(size)");
@@ -107,13 +109,14 @@ public class J2V extends DepthFirstVisitor {
         classScope = n.f1.f0.tokenImage;
         System.out.println(String.format("const empty_%s", classScope));
         System.out.println("");
-        System.out.println("");
         n.f4.accept(this);
     }
 
     @Override
     public void visit(ClassExtendsDeclaration n) {
         classScope = n.f1.f0.tokenImage;
+        System.out.println(String.format("const empty_%s", classScope));
+        System.out.println("");
         n.f6.accept(this);
     }
 
@@ -121,6 +124,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(MethodDeclaration n) {
         varCount = 0;
 
+        lastExpression = "";
         n.f4.accept(this);
         methodScope = String.format("%s.%s", classScope, n.f2.f0.tokenImage);
         print("func %s(this%s)", methodScope, lastExpression);
@@ -364,8 +368,8 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(AllocationExpression n) {
-        String classname = n.f1.f0.tokenImage;
-        if (classVars.get(classname).size() != 0) {
+        something = n.f1.f0.tokenImage;
+        if (classVars.get(something).size() != 0) {
             lastExpression = String.format("t.%d", varCount++);
             print("%s = HeapAllocZ(8)", lastExpression);
 
@@ -376,7 +380,7 @@ public class J2V extends DepthFirstVisitor {
             indent--;
             print("null%d:", nullCount);
         } else {
-            lastExpression = String.format(":empty_%s", classname);
+            lastExpression = String.format(":empty_%s", something);
         }
     }
 
