@@ -4,6 +4,7 @@ import visitor.DepthFirstVisitor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayDeque;
+import java.util.HashSet;
 
 public class J2V extends DepthFirstVisitor {
     public static void main(String[] args) {
@@ -17,6 +18,7 @@ public class J2V extends DepthFirstVisitor {
         }
     }
 
+    HashSet<String> classWithVar;
     ArrayDeque<String> strings;
     String classScope;
     String methodScope;
@@ -35,6 +37,20 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Goal n) {
+        classWithVar = new HashSet<String>();
+        for (Node node : n.f1.nodes) {
+            TypeDeclaration type = (TypeDeclaration) node;
+            if (type.f0.which == 0) {
+                ClassDeclaration c = (ClassDeclaration) type.f0.choice;
+                if (c.f3.present())
+                    classWithVar.add(c.f1.f0.tokenImage);
+            } else {
+                ClassExtendsDeclaration c = (ClassExtendsDeclaration) type.f0.choice;
+                if (c.f5.present())
+                    classWithVar.add(c.f1.f0.tokenImage);
+            }
+        }
+
         strings = new ArrayDeque<String>();
         n.f0.accept(this);
         n.f1.accept(this);
@@ -261,7 +277,18 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AllocationExpression n) {
         something = n.f1.f0.tokenImage;
-        lastExpression = String.format(":empty_%s", something);
+        if (classWithVar.contains(something)) {
+            lastExpression = String.format("t.%d", varCounter);
+            varCounter++;
+            print("%s = HeapAllocZ(8)", lastExpression);
+            print("if %s goto :null1", lastExpression);
+            indent++;
+            print("Error(\"null pointer\")");
+            indent--;
+            print("null1:");
+        } else {
+            lastExpression = String.format(":empty_%s", something);
+        }
     }
 
     @Override
