@@ -100,11 +100,6 @@ public class ItemServlet extends HttpServlet implements Servlet {
         return "";
     }
 
-    private class Bid {
-        public String info;
-        public Date datetime;
-    }
-
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
         String result = AuctionSearchClient.getXMLDataForItemId(request.getParameter("id"));
@@ -120,41 +115,41 @@ public class ItemServlet extends HttpServlet implements Servlet {
         }
 
         Element item = doc.getDocumentElement();
-        String html = "<h2> Item: " + item.getAttribute("ItemID") + "   " + getElementTextByTagNameNR(item, "Name") + "</h2>\n";
+        request.setAttribute("Item_ID", item.getAttribute("ItemID"));
+        request.setAttribute("Item_Name", getElementTextByTagNameNR(item, "Name"));
+
+
         Element[] categories = getElementsByTagNameNR(item, "Category");
-        html += "Categories:";
-        for(Element category: categories)
+        String[] cats = new String[categories.length];
+        for(int i=0; i<categories.length; i++)
         {
-            html += " " + getElementText(category) + ";";
+            Element category = categories[i];
+            cats[i] = getElementText(category);
         }
+        request.setAttribute("Categories", cats);
 
         Element seller = getElementByTagNameNR(item, "Seller");
-        html = html + "\t Seller ID: " + seller.getAttribute("UserID") + "\t Rating: " + seller.getAttribute("Rating") + "\n";
-        html = html + "\t Location: " + getElementTextByTagNameNR(item, "Location") + "\t Country: " + getElementTextByTagNameNR(item, "Country") + "\n";
-        html = html + "\n\n";
-        html = html + "Buy Price: " + strip(getElementTextByTagNameNR(item, "Buy_Price")) + "\n";
-        html = html + "First Bid: " + strip(getElementTextByTagNameNR(item, "First_Bid")) + "\n";
-        html = html + "Currently: " + strip(getElementTextByTagNameNR(item, "Currently")) + "\n";
-        html = html + "Starts: " + formatDate(getElementTextByTagNameNR(item, "Started")) + "\n";
-        html = html + "Ends: " + formatDate(getElementTextByTagNameNR(item, "Ends")) + "\n";
-        html = html + "Description: " + strip(getElementTextByTagNameNR(item, "First_Bid")) + "\n";
+        request.setAttribute("Seller_ID", seller.getAttribute("UserID"));
+        request.setAttribute("Seller_Rating", seller.getAttribute("Rating"));
+        request.setAttribute("Seller_Location", getElementTextByTagNameNR(item, "Location"));
+        request.setAttribute("Seller_Country", getElementTextByTagNameNR(item, "Country"));
+        request.setAttribute("Buy_Price", getElementTextByTagNameNR(item, "Buy_Price"));
+        request.setAttribute("First_bid", getElementTextByTagNameNR(item, "First_Bid"));
+        request.setAttribute("Currently", getElementTextByTagNameNR(item, "Currently"));
+        request.setAttribute("Started", getElementTextByTagNameNR(item, "Started"));
+        request.setAttribute("Ends", getElementTextByTagNameNR(item, "Ends"));
+        request.setAttribute("Description", getElementTextByTagNameNR(item, "Description"));
 
-
-
-        html += "<h3> BIDS </h3>";
         Element bids = getElementByTagNameNR(item, "Bids");
         Element[] allBids = getElementsByTagNameNR(bids, "Bid");
-        PriorityQueue<Bid> bidPriorityQueue = new PriorityQueue<Bid>(allBids.length, new Comparator<Bid>() { public int compare(Bid a, Bid b) { return a.datetime.compareTo(b.datetime); }} );
+
+        ArrayList<Bid> bidList = new ArrayList<Bid>();
 
         SimpleDateFormat inputFormat = new SimpleDateFormat("MMM-dd-yy HH:mm:ss");
 
         for (Element bid : allBids) {
             Element bidder = getElementByTagNameNR(bid, "Bidder");
 
-            String stuff = "\t<b>" + strip(getElementTextByTagNameNR(bid, "Amount")) + "</b>\t by: " + bidder.getAttribute("UserID")
-                    + "\t (" + bidder.getAttribute("Rating") + ")\t" + formatDate(getElementTextByTagNameNR(bid, "Time"))
-                    + "\n\t" + "Location: " + getElementTextByTagNameNR(bidder, "Location") + " Country: "
-                    + getElementTextByTagNameNR(bidder, "Country") + "\n";
             Date dt = new Date();
             try {
                 dt = inputFormat.parse(getElementTextByTagNameNR(bid, "Time"));
@@ -164,17 +159,19 @@ public class ItemServlet extends HttpServlet implements Servlet {
 
             Bid b = new Bid();
             b.datetime = dt;
-            b.info = stuff;
-            bidPriorityQueue.add(b);
+            b.amount = getElementTextByTagNameNR(bid, "Amount");
+            b.bidder = bidder.getAttribute("UserID");
+            b.bidder_rating = bidder.getAttribute("Rating");
+            b.timeStr = formatDate(getElementTextByTagNameNR(bid, "Time"));
+            b.location = getElementTextByTagNameNR(bidder, "Location");
+            b.country = getElementTextByTagNameNR(bidder, "Country");
+            bidList.add(b);
         }
+        Bid[] bidArray = (Bid[]) (bidList.toArray());
+        Arrays.sort(bidArray, new Comparator<Bid>() { public int compare(Bid a, Bid b) { return a.datetime.compareTo(b.datetime); }} );
 
-        Bid b = bidPriorityQueue.poll();
-        while(b!=null)
-        {
-            html += b.info;
-        }
+        request.setAttribute("bids", bidArray);
 
-        request.setAttribute("result", html);
         request.getRequestDispatcher("/getItem.jsp").forward(request, response);
     }
 }
