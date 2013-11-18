@@ -13,7 +13,7 @@
 <%@ page import="edu.ucla.cs.cs144.SearchResult" %>
 <%
 for (SearchResult result : (SearchResult[]) request.getAttribute("results")) {
-out.println("<a href=\"/eBay/item?id=" + result.getItemId() + "\">" + result.getName() + "</a>");
+out.println("<a href=\"/eBay/item?id=" + result.getItemId() + "\">" + result.getName() + "</a><br>");
 }
 %>
 </body>
