@@ -27,7 +27,7 @@ public class J2V extends DepthFirstVisitor {
     String classScope;
     String methodScope;
 
-    int varCounter;
+    int varCount;
     int ifCount;
     int whileCount;
 
@@ -77,7 +77,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(MainClass n) {
-        varCounter = 0;
+        varCount = 0;
 
         print("func Main()");
         indent++;
@@ -106,7 +106,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(MethodDeclaration n) {
-        varCounter = 0;
+        varCount = 0;
 
         n.f4.accept(this);
         methodScope = String.format("%s.%s", classScope, n.f2.f0.tokenImage);
@@ -151,7 +151,7 @@ public class J2V extends DepthFirstVisitor {
         if (simple) {
             String lastString = strings.removeLast().trim();
             print("%s%s", lhs, lastString.substring(lastString.indexOf(" ")));
-            varCounter--;
+            varCount--;
         } else {
             print("%s = %s", lhs, lastExpression);
         }
@@ -199,9 +199,9 @@ public class J2V extends DepthFirstVisitor {
     public void visit(Expression n) {
         n.f0.accept(this);
         if (lastExpression.contains(" ")) {
-            print("t.%d = %s", varCounter, lastExpression);
-            lastExpression = String.format("t.%d", varCounter);
-            ++varCounter;
+            print("t.%d = %s", varCount, lastExpression);
+            lastExpression = String.format("t.%d", varCount);
+            ++varCount;
             simple = true;
         }
     }
@@ -278,9 +278,9 @@ public class J2V extends DepthFirstVisitor {
     public void visit(PrimaryExpression n) {
         n.f0.accept(this);
         if (lastExpression.contains("+")) {
-            print("t.%d = %s", varCounter, lastExpression);
-            lastExpression = String.format("t.%d", varCounter);
-            ++varCounter;
+            print("t.%d = %s", varCount, lastExpression);
+            lastExpression = String.format("t.%d", varCount);
+            ++varCount;
         }
     }
 
@@ -319,8 +319,8 @@ public class J2V extends DepthFirstVisitor {
     public void visit(AllocationExpression n) {
         String classname = n.f1.f0.tokenImage;
         if (classVars.get(classname).size() != 0) {
-            lastExpression = String.format("t.%d", varCounter);
-            varCounter++;
+            lastExpression = String.format("t.%d", varCount);
+            varCount++;
             print("%s = HeapAllocZ(8)", lastExpression);
             print("if %s goto :null1", lastExpression);
             indent++;
