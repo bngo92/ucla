@@ -15,7 +15,7 @@
 <br> Location: <%=request.getAttribute("Seller_Location")%>  Country: <%=request.getAttribute("Seller_Country")%>
 <p>
 Currently: <%=request.getAttribute("Currently")%>
-<br>Buy Price: <%=request.getAttribute("Buy Price")%>
+<br>Buy Price: <%=request.getAttribute("Buy_Price")%>
 <br>First Bid: <%=request.getAttribute("First_bid")%>
 <br>Open From: <%=request.getAttribute("Started")%> to <%=request.getAttribute("Ends")%>
 <p>
