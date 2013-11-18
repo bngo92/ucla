@@ -68,6 +68,10 @@ public class J2V extends DepthFirstVisitor {
             classVars.put(name, vars);
         }
 
+        strings = new ArrayDeque<String>();
+        n.f0.accept(this);
+        n.f1.accept(this);
+
         if (allocArray) {
             print("func AllocArray(size)");
             indent++;
@@ -79,10 +83,6 @@ public class J2V extends DepthFirstVisitor {
             indent--;
             print("");
         }
-
-        strings = new ArrayDeque<String>();
-        n.f0.accept(this);
-        n.f1.accept(this);
         strings.removeLast();
         for (String s: strings)
             System.out.println(s);
