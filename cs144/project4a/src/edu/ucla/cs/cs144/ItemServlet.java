@@ -167,7 +167,7 @@ public class ItemServlet extends HttpServlet implements Servlet {
             b.country = getElementTextByTagNameNR(bidder, "Country");
             bidList.add(b);
         }
-        Bid[] bidArray = (Bid[]) (bidList.toArray());
+        Bid[] bidArray = bidList.toArray(new Bid[bidList.size()]);
         Arrays.sort(bidArray, new Comparator<Bid>() { public int compare(Bid a, Bid b) { return a.datetime.compareTo(b.datetime); }} );
 
         request.setAttribute("bids", bidArray);
