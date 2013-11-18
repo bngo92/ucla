@@ -3,6 +3,7 @@ import visitor.DepthFirstVisitor;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayDeque;
 
 public class J2V extends DepthFirstVisitor {
     public static void main(String[] args) {
@@ -16,6 +17,7 @@ public class J2V extends DepthFirstVisitor {
         }
     }
 
+    ArrayDeque<String> strings;
     String classScope;
     String methodScope;
     int varCounter;
@@ -24,31 +26,39 @@ public class J2V extends DepthFirstVisitor {
     String something;
 
     public void print(String s, Object... arg) {
-        System.out.print(String.format(s, arg));
-    }
-
-    public void printIndent(String s, Object... arg) {
         StringBuilder ret = new StringBuilder();
         for (int i = 0; i < indent * 2; i++)
             ret.append(' ');
-        print(ret + s, arg);
+        strings.add(String.format(ret + s, arg));
+    }
+
+    @Override
+    public void visit(Goal n) {
+        strings = new ArrayDeque<String>();
+        n.f0.accept(this);
+        n.f1.accept(this);
+        for (String s: strings)
+            System.out.println(s);
     }
 
     @Override
     public void visit(MainClass n) {
         varCounter = 0;
 
-        printIndent("func Main()\n");
+        print("func Main()");
         indent++;
         n.f15.accept(this);
-        printIndent("ret\n");
+        print("ret");
         indent--;
-        print("\n");
+        print("");
     }
 
     @Override
     public void visit(ClassDeclaration n) {
         classScope = n.f1.f0.tokenImage;
+        System.out.println(String.format("const empty_%s", classScope));
+        System.out.println("");
+        System.out.println("");
         n.f4.accept(this);
         classScope = null;
     }
@@ -65,12 +75,12 @@ public class J2V extends DepthFirstVisitor {
         varCounter = 0;
 
         n.f4.accept(this);
-        methodScope = String.format("%s.%s" ,classScope, n.f2.f0.tokenImage);
-        printIndent("func (this%s)\n", lastExpression);
+        methodScope = String.format("%s.%s", classScope, n.f2.f0.tokenImage);
+        print("func %s(this%s)", methodScope, lastExpression);
         indent++;
         n.f8.accept(this);
         n.f10.accept(this);
-        printIndent("ret %s\n", lastExpression);
+        print("ret %s", lastExpression);
         indent--;
     }
 
@@ -104,7 +114,13 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AssignmentStatement n) {
         n.f2.accept(this);
-        printIndent(String.format("%s = %s\n", n.f0.f0.tokenImage, lastExpression));
+        if (lastExpression.length() > 2 && lastExpression.substring(0, 2).equals("t.")) {
+            String lastString = strings.removeLast().trim();
+            print("%s%s", n.f0.f0.tokenImage, lastString.substring(lastString.indexOf(" ")));
+            varCounter--;
+        } else {
+            print("%s = %s", n.f0.f0.tokenImage, lastExpression);
+        }
     }
 
     @Override
@@ -114,16 +130,16 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(IfStatement n) {
         n.f2.accept(this);
-        printIndent("if0 %s goto :if1_else\n", lastExpression);
+        print("if0 %s goto :if1_else", lastExpression);
         indent++;
         n.f4.accept(this);
-        printIndent("goto :if1_end\n");
+        print("goto :if1_end");
         indent--;
-        printIndent("if1_else:\n");
+        print("if1_else:");
         indent++;
         n.f6.accept(this);
         indent--;
-        printIndent("if1_end\n");
+        print("if1_end:");
     }
 
     @Override
@@ -133,14 +149,14 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(PrintStatement n) {
         n.f2.accept(this);
-        printIndent("PrintIntS(%s)\n", lastExpression);
+        print("PrintIntS(%s)", lastExpression);
     }
 
     @Override
     public void visit(Expression n) {
         n.f0.accept(this);
         if (lastExpression.contains(" ")) {
-            printIndent("t.%d = %s\n", varCounter, lastExpression);
+            print("t.%d = %s", varCounter, lastExpression);
             lastExpression = String.format("t.%d", varCounter);
             ++varCounter;
         }
@@ -194,7 +210,7 @@ public class J2V extends DepthFirstVisitor {
         n.f0.accept(this);
         String callInstance = lastExpression;
         n.f4.accept(this);
-        lastExpression = String.format("call :%s(%s%s)", something, callInstance, lastExpression);
+        lastExpression = String.format("call :%s.%s(%s%s)", something, n.f2.f0.tokenImage, callInstance, lastExpression);
     }
 
     @Override
@@ -229,7 +245,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(ThisExpression n) {
         lastExpression = "this";
-        something = methodScope;
+        something = classScope;
     }
 
     @Override
