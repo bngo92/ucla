@@ -20,11 +20,17 @@ public class J2V extends DepthFirstVisitor {
     }
 
     HashMap<String, LinkedHashMap<String, String>> classVars;
+
     ArrayDeque<String> strings;
+    int indent;
+
     String classScope;
     String methodScope;
+
     int varCounter;
-    int indent;
+    int ifCount;
+    int whileCount;
+
     String lastExpression;
     boolean simple;
     String something;
@@ -137,10 +143,6 @@ public class J2V extends DepthFirstVisitor {
     }
 
     @Override
-    public void visit(Block n) {
-    }
-
-    @Override
     public void visit(AssignmentStatement n) {
         simple = false;
         n.f0.accept(this);
@@ -176,6 +178,15 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(WhileStatement n) {
+        print("while%d_top:", whileCount);
+        n.f2.accept(this);
+        print("if0 %s goto :while%d_end", lastExpression, whileCount);
+        indent++;
+        n.f4.accept(this);
+        print("goto :while%d_top", whileCount);
+        indent--;
+        print("while%d_end:", whileCount);
+        whileCount++;
     }
 
     @Override
@@ -261,6 +272,16 @@ public class J2V extends DepthFirstVisitor {
             expression += " " + lastExpression;
         }
         lastExpression = expression;
+    }
+
+    @Override
+    public void visit(PrimaryExpression n) {
+        n.f0.accept(this);
+        if (lastExpression.contains("+")) {
+            print("t.%d = %s", varCounter, lastExpression);
+            lastExpression = String.format("t.%d", varCounter);
+            ++varCounter;
+        }
     }
 
     @Override
