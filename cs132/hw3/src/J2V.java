@@ -298,6 +298,7 @@ public class J2V extends DepthFirstVisitor {
             print("t.%d = %s", varCount, lastExpression);
             lastExpression = String.format("t.%d", varCount);
             ++varCount;
+            simple = true;
         }
     }
 
