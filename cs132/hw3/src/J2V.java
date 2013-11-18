@@ -28,7 +28,9 @@ public class J2V extends DepthFirstVisitor {
     String methodScope;
 
     int varCount;
+    int boundCount = 1;
     int ifCount = 1;
+    int nullCount = 1;
     int whileCount = 1;
 
     String lastExpression;
@@ -107,14 +109,12 @@ public class J2V extends DepthFirstVisitor {
         System.out.println("");
         System.out.println("");
         n.f4.accept(this);
-        classScope = null;
     }
 
     @Override
     public void visit(ClassExtendsDeclaration n) {
         classScope = n.f1.f0.tokenImage;
         n.f6.accept(this);
-        classScope = null;
     }
 
     @Override
@@ -262,6 +262,33 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(ArrayLookup n) {
+        n.f0.accept(this);
+        String t1 = lastExpression;
+        int nullCount = this.nullCount++;
+        print("if %s goto :null%d", t1, nullCount);
+        indent++;
+        print("Error(\"null pointer\")");
+        indent--;
+        print("null%d:", nullCount);
+
+        String t2 = String.format("t.%d", varCount++);
+        print("%s = [%s]", t2, t1);
+        n.f2.accept(this);
+        print("%s = Lt(%s %s)", t2, lastExpression, t2);
+
+        int boundCount = this.boundCount++;
+        print("if %s goto :bounds%d", t2, boundCount);
+        indent++;
+        print("Error(\"array index out of bounds\")");
+        indent--;
+        print("bounds%d:", boundCount);
+
+        print("%s = MulS(%s 4)", t2, lastExpression);
+        print("%s = Add(%s %s)", t2, t2, t1);
+
+        String t3 = String.format("t.%d", varCount++);
+        print("%s = [%s+4]", t3, t2);
+        lastExpression = t3;
     }
 
     @Override
@@ -341,11 +368,13 @@ public class J2V extends DepthFirstVisitor {
         if (classVars.get(classname).size() != 0) {
             lastExpression = String.format("t.%d", varCount++);
             print("%s = HeapAllocZ(8)", lastExpression);
-            print("if %s goto :null1", lastExpression);
+
+            int nullCount = this.nullCount++;
+            print("if %s goto :null%d", lastExpression, nullCount);
             indent++;
             print("Error(\"null pointer\")");
             indent--;
-            print("null1:");
+            print("null%d:", nullCount);
         } else {
             lastExpression = String.format(":empty_%s", classname);
         }
