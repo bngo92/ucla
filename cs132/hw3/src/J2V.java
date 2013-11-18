@@ -8,7 +8,7 @@ import java.util.ArrayDeque;
 public class J2V extends DepthFirstVisitor {
     public static void main(String[] args) {
         try {
-            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/Factorial.java")).Goal();
+            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/LinearSearch.java")).Goal();
             root.accept(new J2V());
         } catch (ParseException e) {
             System.out.println(e.toString());
@@ -23,6 +23,7 @@ public class J2V extends DepthFirstVisitor {
     int varCounter;
     int indent;
     String lastExpression;
+    boolean simple;
     String something;
 
     public void print(String s, Object... arg) {
@@ -37,6 +38,7 @@ public class J2V extends DepthFirstVisitor {
         strings = new ArrayDeque<String>();
         n.f0.accept(this);
         n.f1.accept(this);
+        strings.removeLast();
         for (String s: strings)
             System.out.println(s);
     }
@@ -82,6 +84,7 @@ public class J2V extends DepthFirstVisitor {
         n.f10.accept(this);
         print("ret %s", lastExpression);
         indent--;
+        print("");
     }
 
     @Override
@@ -113,8 +116,9 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(AssignmentStatement n) {
+        simple = false;
         n.f2.accept(this);
-        if (lastExpression.length() > 2 && lastExpression.substring(0, 2).equals("t.")) {
+        if (simple) {
             String lastString = strings.removeLast().trim();
             print("%s%s", n.f0.f0.tokenImage, lastString.substring(lastString.indexOf(" ")));
             varCounter--;
@@ -159,6 +163,7 @@ public class J2V extends DepthFirstVisitor {
             print("t.%d = %s", varCounter, lastExpression);
             lastExpression = String.format("t.%d", varCounter);
             ++varCounter;
+            simple = true;
         }
     }
 
@@ -209,6 +214,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(MessageSend n) {
         n.f0.accept(this);
         String callInstance = lastExpression;
+        lastExpression = "";
         n.f4.accept(this);
         lastExpression = String.format("call :%s.%s(%s%s)", something, n.f2.f0.tokenImage, callInstance, lastExpression);
     }
@@ -254,8 +260,8 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(AllocationExpression n) {
-        lastExpression = ":empty_fac";
         something = n.f1.f0.tokenImage;
+        lastExpression = String.format(":empty_%s", something);
     }
 
     @Override
