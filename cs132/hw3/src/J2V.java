@@ -71,10 +71,10 @@ public class J2V extends DepthFirstVisitor {
         }
 
         strings = new ArrayDeque<String>();
+        System.out.println("");
         n.f0.accept(this);
         n.f1.accept(this);
-        if (n.f1.present())
-            System.out.println("");
+        System.out.println("");
 
         if (allocArray) {
             print("func AllocArray(size)");
