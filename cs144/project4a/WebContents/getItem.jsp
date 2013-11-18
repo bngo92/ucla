@@ -23,14 +23,13 @@ Currently: <%request.getAttribute("Currently")%>
 <br>
 <br>
 <h2> Bids for this Item </h2>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <dl>
-<c:forEach items="${bids}" var="bid">
-<dt><b> ${bid.amount}</b> by: ${bid.bidder} (Rating: ${bid.bidder_rating}) </dt>
-<dd>Time: ${bid.timeStr}
-Location: ${bid.location} Country: ${bid.country} </dd>
+<% for(Bid bid : request.getAttribute("bids") ) { %>
+<dt><b> <%=bid.amount %> </b> by: <%=bid.bidder %> (Rating: <% =bid.bidder_rating %>) </dt>
+<dd>Time: <% =bid.timeStr %>
+Location: <% =bid.location %> Country: <%=bid.country %> </dd>
 
-</c:forEach>
+<% } %>
 </dl>
 
 
