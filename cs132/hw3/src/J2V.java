@@ -33,6 +33,7 @@ public class J2V extends DepthFirstVisitor {
 
     String lastExpression;
     boolean simple;
+    boolean allocArray;
     String something;
 
     public void print(String s, Object... arg) {
@@ -65,6 +66,18 @@ public class J2V extends DepthFirstVisitor {
                 offset += 4;
             }
             classVars.put(name, vars);
+        }
+
+        if (allocArray) {
+            print("func AllocArray(size)");
+            indent++;
+            print("bytes = MulS(size 4)");
+            print("bytes = Add(bytes 4");
+            print("v = HeapAllocZ(bytes)");
+            print("[v] = size");
+            print("ret v");
+            indent--;
+            print("");
         }
 
         strings = new ArrayDeque<String>();
@@ -313,6 +326,11 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(ArrayAllocationExpression n) {
+        allocArray = true;
+        n.f3.accept(this);
+        print("t.%d = call :AllocArray(%s)", varCount, lastExpression);
+        lastExpression = String.format("t.%d", varCount);
+        varCount++;
     }
 
     @Override
