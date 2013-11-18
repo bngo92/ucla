@@ -176,8 +176,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(IfStatement n) {
-        int ifCount = this.ifCount;
-        this.ifCount++;
+        int ifCount = this.ifCount++;
         n.f2.accept(this);
         print("if0 %s goto :if%d_else", lastExpression, ifCount);
         indent++;
@@ -189,13 +188,11 @@ public class J2V extends DepthFirstVisitor {
         n.f6.accept(this);
         indent--;
         print("if%d_end:", ifCount);
-        ifCount++;
     }
 
     @Override
     public void visit(WhileStatement n) {
-        int whileCount = this.whileCount;
-        this.whileCount++;
+        int whileCount = this.whileCount++;
         print("while%d_top:", whileCount);
         n.f2.accept(this);
         print("if0 %s goto :while%d_end", lastExpression, whileCount);
@@ -216,9 +213,9 @@ public class J2V extends DepthFirstVisitor {
     public void visit(Expression n) {
         n.f0.accept(this);
         if (lastExpression.contains(" ")) {
-            print("t.%d = %s", varCount, lastExpression);
-            lastExpression = String.format("t.%d", varCount);
-            ++varCount;
+            String t = String.format("t.%d", varCount++);
+            print("%s = %s", t, lastExpression);
+            lastExpression = t;
             simple = true;
         }
     }
@@ -296,8 +293,7 @@ public class J2V extends DepthFirstVisitor {
         n.f0.accept(this);
         if (lastExpression.contains("+")) {
             print("t.%d = %s", varCount, lastExpression);
-            lastExpression = String.format("t.%d", varCount);
-            ++varCount;
+            lastExpression = String.format("t.%d", varCount++);
             simple = true;
         }
     }
@@ -336,16 +332,14 @@ public class J2V extends DepthFirstVisitor {
         allocArray = true;
         n.f3.accept(this);
         print("t.%d = call :AllocArray(%s)", varCount, lastExpression);
-        lastExpression = String.format("t.%d", varCount);
-        varCount++;
+        lastExpression = String.format("t.%d", varCount++);
     }
 
     @Override
     public void visit(AllocationExpression n) {
         String classname = n.f1.f0.tokenImage;
         if (classVars.get(classname).size() != 0) {
-            lastExpression = String.format("t.%d", varCount);
-            varCount++;
+            lastExpression = String.format("t.%d", varCount++);
             print("%s = HeapAllocZ(8)", lastExpression);
             print("if %s goto :null1", lastExpression);
             indent++;
