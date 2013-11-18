@@ -28,8 +28,8 @@ public class J2V extends DepthFirstVisitor {
     String methodScope;
 
     int varCount;
-    int ifCount;
-    int whileCount;
+    int ifCount = 1;
+    int whileCount = 1;
 
     String lastExpression;
     boolean simple;
@@ -176,21 +176,26 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(IfStatement n) {
+        int ifCount = this.ifCount;
+        this.ifCount++;
         n.f2.accept(this);
-        print("if0 %s goto :if1_else", lastExpression);
+        print("if0 %s goto :if%d_else", lastExpression, ifCount);
         indent++;
         n.f4.accept(this);
-        print("goto :if1_end");
+        print("goto :if%d_end", ifCount);
         indent--;
-        print("if1_else:");
+        print("if%d_else:", ifCount);
         indent++;
         n.f6.accept(this);
         indent--;
-        print("if1_end:");
+        print("if%d_end:", ifCount);
+        ifCount++;
     }
 
     @Override
     public void visit(WhileStatement n) {
+        int whileCount = this.whileCount;
+        this.whileCount++;
         print("while%d_top:", whileCount);
         n.f2.accept(this);
         print("if0 %s goto :while%d_end", lastExpression, whileCount);
@@ -199,7 +204,6 @@ public class J2V extends DepthFirstVisitor {
         print("goto :while%d_top", whileCount);
         indent--;
         print("while%d_end:", whileCount);
-        whileCount++;
     }
 
     @Override
@@ -304,10 +308,12 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(TrueLiteral n) {
+        lastExpression = "1";
     }
 
     @Override
     public void visit(FalseLiteral n) {
+        lastExpression = "0";
     }
 
     @Override
