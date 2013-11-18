@@ -4,7 +4,8 @@ import visitor.DepthFirstVisitor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayDeque;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class J2V extends DepthFirstVisitor {
     public static void main(String[] args) {
@@ -18,7 +19,7 @@ public class J2V extends DepthFirstVisitor {
         }
     }
 
-    HashSet<String> classWithVar;
+    HashMap<String, LinkedHashMap<String, String>> classVars;
     ArrayDeque<String> strings;
     String classScope;
     String methodScope;
@@ -37,18 +38,27 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Goal n) {
-        classWithVar = new HashSet<String>();
+        classVars = new HashMap<String, LinkedHashMap<String, String>>();
         for (Node node : n.f1.nodes) {
             TypeDeclaration type = (TypeDeclaration) node;
+            NodeListOptional list;
+            String name;
             if (type.f0.which == 0) {
-                ClassDeclaration c = (ClassDeclaration) type.f0.choice;
-                if (c.f3.present())
-                    classWithVar.add(c.f1.f0.tokenImage);
+                name = ((ClassDeclaration) type.f0.choice).f1.f0.tokenImage;
+                list = ((ClassDeclaration) type.f0.choice).f3;
             } else {
-                ClassExtendsDeclaration c = (ClassExtendsDeclaration) type.f0.choice;
-                if (c.f5.present())
-                    classWithVar.add(c.f1.f0.tokenImage);
+                name = ((ClassExtendsDeclaration) type.f0.choice).f1.f0.tokenImage;
+                list = ((ClassExtendsDeclaration) type.f0.choice).f5;
             }
+
+            LinkedHashMap<String, String> vars = new LinkedHashMap<String, String>();
+            int offset = 0;
+            for (Node varNode : list.nodes) {
+                VarDeclaration var = (VarDeclaration) varNode;
+                vars.put(var.f1.f0.tokenImage, String.format("[this+%d]", offset));
+                offset += 4;
+            }
+            classVars.put(name, vars);
         }
 
         strings = new ArrayDeque<String>();
@@ -133,13 +143,15 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AssignmentStatement n) {
         simple = false;
+        n.f0.accept(this);
+        String lhs = lastExpression;
         n.f2.accept(this);
         if (simple) {
             String lastString = strings.removeLast().trim();
-            print("%s%s", n.f0.f0.tokenImage, lastString.substring(lastString.indexOf(" ")));
+            print("%s%s", lhs, lastString.substring(lastString.indexOf(" ")));
             varCounter--;
         } else {
-            print("%s = %s", n.f0.f0.tokenImage, lastExpression);
+            print("%s = %s", lhs, lastExpression);
         }
     }
 
@@ -198,6 +210,11 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(PlusExpression n) {
+        n.f0.accept(this);
+        String op1 = lastExpression;
+        n.f2.accept(this);
+        String op2 = lastExpression;
+        lastExpression = String.format("Add(%s %s)", op1, op2);
     }
 
     @Override
@@ -262,6 +279,9 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(Identifier n) {
         lastExpression = n.f0.tokenImage;
+        String offset = classVars.get(classScope).get(lastExpression);
+        if (offset != null)
+            lastExpression = offset;
     }
 
     @Override
@@ -276,8 +296,8 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(AllocationExpression n) {
-        something = n.f1.f0.tokenImage;
-        if (classWithVar.contains(something)) {
+        String classname = n.f1.f0.tokenImage;
+        if (classVars.get(classname).size() != 0) {
             lastExpression = String.format("t.%d", varCounter);
             varCounter++;
             print("%s = HeapAllocZ(8)", lastExpression);
@@ -287,7 +307,7 @@ public class J2V extends DepthFirstVisitor {
             indent--;
             print("null1:");
         } else {
-            lastExpression = String.format(":empty_%s", something);
+            lastExpression = String.format(":empty_%s", classname);
         }
     }
 
