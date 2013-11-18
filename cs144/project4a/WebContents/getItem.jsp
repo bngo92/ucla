@@ -24,12 +24,12 @@ Currently: <%=request.getAttribute("Currently")%>
 <br>
 <h2> Bids for this Item </h2>
 <dl>
-<% for(Bid bid : request.getAttribute("bids") ) { %>
-<dt><b> <%=bid.amount %> </b> by: <%=bid.bidder %> (Rating: <% =bid.bidder_rating %>) </dt>
-<dd>Time: <% =bid.timeStr %>
-Location: <% =bid.location %> Country: <%=bid.country %> </dd>
-
-<% } %>
+<%
+for(Bid bid : (Bid[]) request.getAttribute("bids")) {
+out.println(String.format("<dt><b>%s</b> by: %s (Rating: %s)</dt>", bid.amount, bid.bidder, bid.bidder_rating));
+out.println(String.format("<dd>Time: %s Location: %s Country: %s</dd>", bid.timeStr, bid.location, bid.country));
+}
+%>
 </dl>
 
 
