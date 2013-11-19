@@ -178,6 +178,7 @@ public class J2V extends DepthFirstVisitor {
 
         indent++;
         n.f8.accept(this);
+        access = true;
         n.f10.accept(this);
         print("ret %s", lastExpression);
         indent--;
@@ -216,11 +217,10 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(AssignmentStatement n) {
-        access = true;
+        access = false;
         n.f0.accept(this);
         String lhs = lastExpression;
         n.f2.accept(this);
-        access = false;
         print("%s = %s", lhs, lastExpression);
     }
 
@@ -230,6 +230,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(IfStatement n) {
+        access = true;
         int ifCount = this.ifCount++;
         not = false;
         n.f2.accept(this);
@@ -263,6 +264,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(PrintStatement n) {
+        access = true;
         n.f2.accept(this);
         print("PrintIntS(%s)", lastExpression);
     }
@@ -270,7 +272,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(Expression n) {
         n.f0.accept(this);
-        if (!access && lastExpression.contains(" ")) {
+        if (access && lastExpression.contains(" ")) {
             String t = String.format("t.%d", varCount++);
             print("%s = %s", t, lastExpression);
             lastExpression = t;
@@ -355,13 +357,14 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(MessageSend n) {
         Boolean save = access;
-        access = false;
+        access = true;
         n.f0.accept(this);
-        access = save;
+
         String callInstance = lastExpression;
         lastExpression = "";
         n.f4.accept(this);
         lastExpression = String.format("call :%s.%s(%s%s)", objClass, n.f2.f0.tokenImage, callInstance, lastExpression);
+        access = save;
     }
 
     @Override
@@ -378,7 +381,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(PrimaryExpression n) {
         n.f0.accept(this);
-        if (!access && lastExpression.contains("+")) {
+        if (access && lastExpression.contains("+")) {
             print("t.%d = %s", varCount, lastExpression);
             lastExpression = String.format("t.%d", varCount++);
         }
@@ -404,7 +407,7 @@ public class J2V extends DepthFirstVisitor {
         lastExpression = n.f0.tokenImage;
         Var var = classVars.get(classScope).get(lastExpression);
         if (var != null) {
-            if (!access && var.type == VarType.REFERENCE) {
+            if (access && var.type == VarType.REFERENCE) {
                 print("if %s goto :null%d", var.var, nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
@@ -417,7 +420,7 @@ public class J2V extends DepthFirstVisitor {
 
         var = methodVars.get(lastExpression);
         if (var != null) {
-            if (!access && var.type == VarType.REFERENCE) {
+            if (access && var.type == VarType.REFERENCE) {
                 print("if %s goto :null%d", var.var, nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
@@ -447,15 +450,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(AllocationExpression n) {
         objClass = n.f1.f0.tokenImage;
         if (classVars.get(objClass).size() != 0) {
-            lastExpression = String.format("t.%d", varCount++);
-            print("%s = HeapAllocZ(%d)", lastExpression, classSize.get(objClass));
-
-            int nullCount = this.nullCount++;
-            print("if %s goto :null%d", lastExpression, nullCount);
-            indent++;
-            print("Error(\"null pointer\")");
-            indent--;
-            print("null%d:", nullCount);
+            lastExpression = String.format("HeapAllocZ(%d)", classSize.get(objClass));
         } else {
             lastExpression = String.format(":empty_%s", objClass);
         }

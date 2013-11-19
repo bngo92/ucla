@@ -111,7 +111,7 @@ func List.InitNew(this v_elem v_next v_end)
 func List.Insert(this new_elem)
   aux03 = this
   aux02 = HeapAllocZ(12)
-  if aux02 goto :null5
+  if new_elem goto :null5
     Error("null pointer")
   null5:
   ret_val = call :List.InitNew(aux02 new_elem aux03 0)
@@ -130,39 +130,24 @@ func List.Delete(this e)
   var_end = [this+8]
   var_elem = [this+0]
   while1_top:
-  if var_end goto :ss1_else
-    t.0 = Sub(1 ret_val)
-    goto :ss1_end
-  ss1_else:
-    t.0 = 0
-  ss1_end:
-  if0 t.0 goto :while1_end
+  if0 [this+0] goto :while1_end
     if e goto :null6
       Error("null pointer")
     null6:
-    t.1 = call :Element.Equal(e var_elem)
-    if0 t.1 goto :if8_else
+    t.0 = call :Element.Equal(e var_elem)
+    if0 t.0 goto :if8_else
       ret_val = 1
-      t.2 = LtS(aux04 0)
-      if0 t.2 goto :if9_else
-        if aux01 goto :null7
-          Error("null pointer")
-        null7:
-        my_head = call :List.GetNext(aux01)
+      t.1 = LtS(aux04 0)
+      if0 t.1 goto :if9_else
+        my_head = call :Element.GetNext(aux01)
         goto :if9_end
       if9_else:
-        t.3 = Sub(0 555)
-        PrintIntS(t.3)
-        if prev goto :null8
-          Error("null pointer")
-        null8:
-        if aux01 goto :null9
-          Error("null pointer")
-        null9:
-        t.4 = call :List.GetNext(aux01)
-        aux05 = call :List.SetNext(prev t.4)
-        t.5 = Sub(0 555)
-        PrintIntS(t.5)
+        t.2 = Sub(0 555)
+        PrintIntS(t.2)
+        t.3 = call :Element.GetNext(aux01)
+        aux05 = call :Element.SetNext(prev t.3)
+        t.4 = Sub(0 555)
+        PrintIntS(t.4)
       if9_end:
       goto :if8_end
     if8_else:
@@ -170,18 +155,9 @@ func List.Delete(this e)
     if8_end:
     if ret_val goto :if10_else
       prev = aux01
-      if aux01 goto :null10
-        Error("null pointer")
-      null10:
-      aux01 = call :List.GetNext(aux01)
-      if aux01 goto :null11
-        Error("null pointer")
-      null11:
-      var_end = call :List.GetEnd(aux01)
-      if aux01 goto :null12
-        Error("null pointer")
-      null12:
-      var_elem = call :List.GetElem(aux01)
+      aux01 = call :Element.GetNext(aux01)
+      var_end = call :Element.GetEnd(aux01)
+      var_elem = call :Element.GetElem(aux01)
       aux04 = 1
       goto :if10_end
     if10_else:
@@ -197,30 +173,20 @@ func List.Search(this e)
   var_end = [this+8]
   var_elem = [this+0]
   while2_top:
-  t.0 = Sub(1 var_end)
-  if0 t.0 goto :while2_end
-    if e goto :null13
+  if0 var_end goto :while2_end
+    if e goto :null7
       Error("null pointer")
-    null13:
-    t.1 = call :Element.Equal(e var_elem)
-    if0 t.1 goto :if11_else
+    null7:
+    t.0 = call :Element.Equal(e var_elem)
+    if0 t.0 goto :if11_else
       int_ret_val = 1
       goto :if11_end
     if11_else:
       nt = 0
     if11_end:
-    if aux01 goto :null14
-      Error("null pointer")
-    null14:
-    aux01 = call :List.GetNext(aux01)
-    if aux01 goto :null15
-      Error("null pointer")
-    null15:
-    var_end = call :List.GetEnd(aux01)
-    if aux01 goto :null16
-      Error("null pointer")
-    null16:
-    var_elem = call :List.GetElem(aux01)
+    aux01 = call :Element.GetNext(aux01)
+    var_end = call :Element.GetEnd(aux01)
+    var_elem = call :Element.GetElem(aux01)
     goto :while2_top
   while2_end:
   ret int_ret_val
@@ -230,10 +196,16 @@ func List.GetEnd(this)
   ret t.0
 
 func List.GetElem(this)
+  if [this+0] goto :null8
+    Error("null pointer")
+  null8:
   t.0 = [this+0]
   ret t.0
 
 func List.GetNext(this)
+  if [this+4] goto :null9
+    Error("null pointer")
+  null9:
   t.0 = [this+4]
   ret t.0
 
@@ -242,24 +214,11 @@ func List.Print(this)
   var_end = [this+8]
   var_elem = [this+0]
   while3_top:
-  t.0 = Sub(1 var_end)
-  if0 t.0 goto :while3_end
-    if var_elem goto :null17
-      Error("null pointer")
-    null17:
-    t.1 = call :Element.GetAge(var_elem)
-    PrintIntS(t.1)
-    if aux01 goto :null18
-      Error("null pointer")
-    null18:
+  if0 var_end goto :while3_end
+    t.0 = call :List.GetAge(var_elem)
+    PrintIntS(t.0)
     aux01 = call :List.GetNext(aux01)
-    if aux01 goto :null19
-      Error("null pointer")
-    null19:
     var_end = call :List.GetEnd(aux01)
-    if aux01 goto :null20
-      Error("null pointer")
-    null20:
     var_elem = call :List.GetElem(aux01)
     goto :while3_top
   while3_end:
@@ -267,107 +226,41 @@ func List.Print(this)
 
 func LL.Start(this)
   last_elem = HeapAllocZ(12)
-  if last_elem goto :null21
-    Error("null pointer")
-  null21:
   aux01 = call :List.Init(last_elem)
   head = last_elem
-  if head goto :null22
-    Error("null pointer")
-  null22:
   aux01 = call :List.Init(head)
-  if head goto :null23
-    Error("null pointer")
-  null23:
   aux01 = call :List.Print(head)
   el01 = HeapAllocZ(12)
-  if el01 goto :null24
-    Error("null pointer")
-  null24:
   aux01 = call :Element.Init(el01 25 37000 0)
-  if head goto :null25
-    Error("null pointer")
-  null25:
-  head = call :List.Insert(head el01)
-  if head goto :null26
-    Error("null pointer")
-  null26:
-  aux01 = call :List.Print(head)
+  head = call :Element.Insert(head el01)
+  aux01 = call :Element.Print(head)
   PrintIntS(10000000)
   el01 = HeapAllocZ(12)
-  if el01 goto :null27
-    Error("null pointer")
-  null27:
   aux01 = call :Element.Init(el01 39 42000 1)
   el02 = el01
-  if head goto :null28
-    Error("null pointer")
-  null28:
-  head = call :List.Insert(head el01)
-  if head goto :null29
-    Error("null pointer")
-  null29:
-  aux01 = call :List.Print(head)
+  head = call :Element.Insert(head el01)
+  aux01 = call :Element.Print(head)
   PrintIntS(10000000)
   el01 = HeapAllocZ(12)
-  if el01 goto :null30
-    Error("null pointer")
-  null30:
   aux01 = call :Element.Init(el01 22 34000 0)
-  if head goto :null31
-    Error("null pointer")
-  null31:
-  head = call :List.Insert(head el01)
-  if head goto :null32
-    Error("null pointer")
-  null32:
-  aux01 = call :List.Print(head)
+  head = call :Element.Insert(head el01)
+  aux01 = call :Element.Print(head)
   el03 = HeapAllocZ(12)
-  if el03 goto :null33
-    Error("null pointer")
-  null33:
   aux01 = call :Element.Init(el03 27 34000 0)
-  if head goto :null34
-    Error("null pointer")
-  null34:
-  t.0 = call :List.Search(head el02)
+  t.0 = call :Element.Search(head el02)
   PrintIntS(t.0)
-  if head goto :null35
-    Error("null pointer")
-  null35:
-  t.1 = call :List.Search(head el03)
+  t.1 = call :Element.Search(head el03)
   PrintIntS(t.1)
   PrintIntS(10000000)
   el01 = HeapAllocZ(12)
-  if el01 goto :null36
-    Error("null pointer")
-  null36:
   aux01 = call :Element.Init(el01 28 35000 0)
-  if head goto :null37
-    Error("null pointer")
-  null37:
-  head = call :List.Insert(head el01)
-  if head goto :null38
-    Error("null pointer")
-  null38:
-  aux01 = call :List.Print(head)
+  head = call :Element.Insert(head el01)
+  aux01 = call :Element.Print(head)
   PrintIntS(2220000)
-  if head goto :null39
-    Error("null pointer")
-  null39:
-  head = call :List.Delete(head el02)
-  if head goto :null40
-    Error("null pointer")
-  null40:
-  aux01 = call :List.Print(head)
+  head = call :Element.Delete(head el02)
+  aux01 = call :Element.Print(head)
   PrintIntS(33300000)
-  if head goto :null41
-    Error("null pointer")
-  null41:
-  head = call :List.Delete(head el01)
-  if head goto :null42
-    Error("null pointer")
-  null42:
-  aux01 = call :List.Print(head)
+  head = call :Element.Delete(head el01)
+  aux01 = call :Element.Print(head)
   PrintIntS(44440000)
   ret 0
