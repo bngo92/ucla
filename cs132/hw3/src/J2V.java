@@ -337,6 +337,7 @@ public class J2V extends DepthFirstVisitor {
         eval = savedEval;
         String rhs = lastExpression;
         lastExpression = String.format("LtS(%s %s)", lhs, rhs);
+        not = false;
     }
 
     @Override
