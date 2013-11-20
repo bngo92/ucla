@@ -294,7 +294,7 @@ public class J2V extends DepthFirstVisitor {
         print("while%d_top:", whileCount);
         local = true;
 
-        not = true;
+        not = false;
         n.f2.accept(this);
         if (not) {
             String var = String.format("t.%d", varCount++);
