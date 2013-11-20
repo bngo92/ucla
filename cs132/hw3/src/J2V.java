@@ -1,6 +1,10 @@
 import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -10,10 +14,13 @@ public class J2V extends DepthFirstVisitor {
 
     public static void main(String[] args) {
         try {
-            Node root = new MiniJavaParser(System.in).Goal();
+            System.setOut(new PrintStream(new File("cs132/hw3/LinkedList.opt.vapor")));
+            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/LinkedList.java")).Goal();
             root.accept(new J2V());
         } catch (ParseException e) {
             System.out.println(e.toString());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
 
@@ -473,6 +480,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(PrimaryExpression n) {
+        newAlloc = false;
         n.f0.accept(this);
         if ((local || eval) && (lastExpression.contains("+") || newAlloc)) {
             print("t.%d = %s", varCount, lastExpression);
@@ -483,7 +491,6 @@ public class J2V extends DepthFirstVisitor {
                 print("Error(\"null pointer\")");
                 indent--;
                 print("null%d:", nullCount++);
-                newAlloc = false;
             }
         }
     }
