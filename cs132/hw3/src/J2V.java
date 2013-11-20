@@ -335,8 +335,7 @@ public class J2V extends DepthFirstVisitor {
         n.f0.accept(this);
 
         if (not) {
-            int ifCount = this.ifCount;
-            print("if %s goto :if%d_else", lastExpression, ifCount);
+            print("if %s goto :if%d_else", lastExpression, ifCount - 1);
 
             eval = true;
             n.f2.accept(this);
