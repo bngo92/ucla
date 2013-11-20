@@ -335,14 +335,12 @@ public class J2V extends DepthFirstVisitor {
         n.f0.accept(this);
 
         if (not) {
-            int ifCount = this.ifCount++;
+            int ifCount = this.ifCount;
             print("if %s goto :if%d_else", lastExpression, ifCount);
 
             eval = true;
             n.f2.accept(this);
             eval = savedEval;
-
-            print("if %s goto :if%d_else", lastExpression, ifCount);
         } else {
             int ss = ssCount++;
             print("if %s goto :ss%d_else", lastExpression, ss);
@@ -362,8 +360,8 @@ public class J2V extends DepthFirstVisitor {
             print("%s = 0", lastExpression);
             indent--;
             print("ss%d_end:", ss);
+            not = false;
         }
-        not = false;
     }
 
     @Override
