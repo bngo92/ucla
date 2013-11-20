@@ -331,26 +331,38 @@ public class J2V extends DepthFirstVisitor {
     public void visit(AndExpression n) {
         Boolean savedEval = eval;
         eval = true;
+        not = false;
         n.f0.accept(this);
 
-        int ss = ssCount++;
-        print("if %s goto :ss%d_else", lastExpression, ss);
+        if (not) {
+            int ifCount = this.ifCount++;
+            print("if %s goto :if%d_else", lastExpression, ifCount);
 
-        eval = true;
-        n.f2.accept(this);
-        eval = savedEval;
+            eval = true;
+            n.f2.accept(this);
+            eval = savedEval;
 
-        int varCount = this.varCount++;
-        indent++;
-        print("t.%d = Sub(1 %s)", varCount, lastExpression);
-        print("goto :ss%d_end", ss);
-        indent--;
-        print("ss%d_else:", ss);
-        indent++;
-        lastExpression = String.format("t.%d", varCount);
-        print("%s = 0", lastExpression);
-        indent--;
-        print("ss%d_end:", ss);
+            print("if %s goto :if%d_else", lastExpression, ifCount);
+        } else {
+            int ss = ssCount++;
+            print("if %s goto :ss%d_else", lastExpression, ss);
+
+            eval = true;
+            n.f2.accept(this);
+            eval = savedEval;
+
+            int varCount = this.varCount++;
+            indent++;
+            print("t.%d = Sub(1 %s)", varCount, lastExpression);
+            print("goto :ss%d_end", ss);
+            indent--;
+            print("ss%d_else:", ss);
+            indent++;
+            lastExpression = String.format("t.%d", varCount);
+            print("%s = 0", lastExpression);
+            indent--;
+            print("ss%d_end:", ss);
+        }
         not = false;
     }
 
