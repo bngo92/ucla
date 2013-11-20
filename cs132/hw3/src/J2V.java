@@ -384,6 +384,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(ArrayLookup n) {
+        local = true;
         n.f0.accept(this);
         String t1 = lastExpression;
         int nullCount = this.nullCount++;
@@ -449,7 +450,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(PrimaryExpression n) {
         n.f0.accept(this);
-        if (local && lastExpression.contains("+")) {
+        if ((local || eval) && lastExpression.contains("+")) {
             print("t.%d = %s", varCount, lastExpression);
             lastExpression = String.format("t.%d", varCount++);
         }
