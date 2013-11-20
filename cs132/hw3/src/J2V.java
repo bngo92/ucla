@@ -233,10 +233,10 @@ public class J2V extends DepthFirstVisitor {
     public void visit(ArrayAssignmentStatement n) {
         n.f0.accept(this);
         String t1 = String.format("t.%d", varCount++);
-        print("%s = %s", lastExpression, t1);
+        print("%s = %s", t1, lastExpression);
 
         int nullCount = this.nullCount++;
-        print("if %s goto :null%d", lastExpression, nullCount);
+        print("if %s goto :null%d", t1, nullCount);
         indent++;
         print("Error(\"null pointer\")");
         indent--;
@@ -255,7 +255,7 @@ public class J2V extends DepthFirstVisitor {
         indent--;
 
         print("bounds%d:", boundCount);
-        print("%s = MulS(%s 4)", lastExpression, t2);
+        print("%s = MulS(%s 4)", t2, lastExpression);
         print("%s = Add(%s %s)", t2, t2, t1);
 
         n.f5.accept(this);
