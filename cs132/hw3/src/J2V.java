@@ -447,16 +447,16 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(PrimaryExpression n) {
         n.f0.accept(this);
-        if ((local || eval) && (lastExpression.contains("+") || lastExpression.contains("HeapAllocZ"))) {
-            if (lastExpression.contains("HeapAllocZ")) {
-                print("if t.%d goto :null%d", varCount, nullCount);
+        if ((local || eval) && (lastExpression.contains("+") || reference)) {
+            print("t.%d = %s", varCount, lastExpression);
+            lastExpression = String.format("t.%d", varCount++);
+            if (reference) {
+                print("if %s goto :null%d", lastExpression, varCount, nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
                 indent--;
                 print("null%d:", nullCount++);
             }
-            print("t.%d = %s", varCount, lastExpression);
-            lastExpression = String.format("t.%d", varCount++);
         }
     }
 
