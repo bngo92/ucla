@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class J2V extends DepthFirstVisitor {
+    private boolean eval;
+
     public static void main(String[] args) {
         try {
             System.setOut(new PrintStream(new File("cs132/hw3/LinkedList.opt.vapor")));
@@ -66,7 +68,7 @@ public class J2V extends DepthFirstVisitor {
     int ssCount = 1;
 
     String lastExpression;
-    boolean access;
+    boolean reference;
     boolean allocArray;
     boolean local;
     String objClass;
@@ -134,8 +136,8 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(MainClass n) {
         varCount = 0;
-
         print("func Main()");
+
         indent++;
         n.f15.accept(this);
         print("ret");
@@ -180,7 +182,8 @@ public class J2V extends DepthFirstVisitor {
 
         indent++;
         n.f8.accept(this);
-        access = false;
+
+        reference = false;
         n.f10.accept(this);
         print("ret %s", lastExpression);
         indent--;
@@ -219,9 +222,10 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(AssignmentStatement n) {
-        access = false;
+        reference = false;
         n.f0.accept(this);
         String lhs = lastExpression;
+
         local = false;
         n.f2.accept(this);
         local = true;
@@ -234,19 +238,24 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(IfStatement n) {
-        access = true;
         int ifCount = this.ifCount++;
+        reference = true;
         not = false;
+        local = true;
+
         n.f2.accept(this);
         if (not)
             print("if %s goto :if%d_else", lastExpression, ifCount);
         else
             print("if0 %s goto :if%d_else", lastExpression, ifCount);
+
         indent++;
         n.f4.accept(this);
+
         print("goto :if%d_end", ifCount);
         indent--;
         print("if%d_else:", ifCount);
+
         indent++;
         n.f6.accept(this);
         indent--;
@@ -258,9 +267,17 @@ public class J2V extends DepthFirstVisitor {
         int whileCount = this.whileCount++;
         print("while%d_top:", whileCount);
         local = true;
+
+        not = true;
         n.f2.accept(this);
+        if (not) {
+            String var = String.format("t.%d", varCount++);
+            print("%s = Sub(1 %s)", var, lastExpression);
+            lastExpression = var;
+        }
         print("if0 %s goto :while%d_end", lastExpression, whileCount);
         indent++;
+
         n.f4.accept(this);
         print("goto :while%d_top", whileCount);
         indent--;
@@ -269,7 +286,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(PrintStatement n) {
-        access = true;
+        local = true;
         n.f2.accept(this);
         print("PrintIntS(%s)", lastExpression);
     }
@@ -277,7 +294,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(Expression n) {
         n.f0.accept(this);
-        if (access && lastExpression.contains(" ")) {
+        if ((local || eval) && lastExpression.contains(" ")) {
             String t = String.format("t.%d", varCount++);
             print("%s = %s", t, lastExpression);
             lastExpression = t;
@@ -289,6 +306,7 @@ public class J2V extends DepthFirstVisitor {
         n.f0.accept(this);
         int ss = ssCount++;
         print("if %s goto :ss%d_else", lastExpression, ss);
+
         n.f2.accept(this);
         int varCount = this.varCount++;
         indent++;
@@ -301,6 +319,7 @@ public class J2V extends DepthFirstVisitor {
         print("%s = 0", lastExpression);
         indent--;
         print("ss%d_end:", ss);
+        not = false;
     }
 
     @Override
@@ -376,14 +395,17 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(MessageSend n) {
-        Boolean save = access;
-        access = true;
+        reference = true;
         n.f0.accept(this);
-
+        String objClass = this.objClass;
         String callInstance = lastExpression;
         lastExpression = "";
-        access = save;
+
+        reference = false;
+        Boolean savedEval = eval;
+        eval = true;
         n.f4.accept(this);
+        eval = savedEval;
         lastExpression = String.format("call :%s.%s(%s%s)", objClass, n.f2.f0.tokenImage, callInstance, lastExpression);
     }
 
@@ -427,7 +449,7 @@ public class J2V extends DepthFirstVisitor {
         lastExpression = n.f0.tokenImage;
         Var var = classVars.get(classScope).get(lastExpression);
         if (var != null) {
-            if (access && var.type == VarType.REFERENCE) {
+            if (reference && var.type == VarType.REFERENCE) {
                 print("if %s goto :null%d", var.var, nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
@@ -440,7 +462,7 @@ public class J2V extends DepthFirstVisitor {
 
         var = methodVars.get(lastExpression);
         if (var != null) {
-            if (access && var.type == VarType.REFERENCE) {
+            if (reference && var.type == VarType.REFERENCE) {
                 print("if %s goto :null%d", var.var, nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
