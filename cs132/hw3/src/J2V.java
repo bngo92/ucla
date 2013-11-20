@@ -291,7 +291,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(Expression n) {
         n.f0.accept(this);
-        if ((local || eval) && lastExpression.contains(" ")) {
+        if ((local || eval) && (lastExpression.contains(" ") || lastExpression.contains("+"))) {
             String t = String.format("t.%d", varCount++);
             print("%s = %s", t, lastExpression);
             lastExpression = t;
@@ -408,10 +408,7 @@ public class J2V extends DepthFirstVisitor {
 
         print("%s = MulS(%s 4)", t2, lastExpression);
         print("%s = Add(%s %s)", t2, t2, t1);
-
-        String t3 = String.format("t.%d", varCount++);
-        print("%s = [%s+4]", t3, t2);
-        lastExpression = t3;
+        lastExpression = String.format("[%s+4]", t2);
     }
 
     @Override
