@@ -1,10 +1,6 @@
 import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -14,12 +10,10 @@ public class J2V extends DepthFirstVisitor {
 
     public static void main(String[] args) {
         try {
-            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/Factorial.java")).Goal();
+            Node root = new MiniJavaParser(System.in).Goal();
             root.accept(new J2V());
         } catch (ParseException e) {
             System.out.println(e.toString());
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
 
@@ -70,6 +64,7 @@ public class J2V extends DepthFirstVisitor {
     boolean reference;
     boolean allocArray;
     boolean local;
+    boolean staticMethod;
     String objClass;
     boolean not;
 
@@ -84,7 +79,7 @@ public class J2V extends DepthFirstVisitor {
         print("func AllocArray(size)");
         indent++;
         print("bytes = MulS(size 4)");
-        print("bytes = Add(bytes 4");
+        print("bytes = Add(bytes 4)");
         print("v = HeapAllocZ(bytes)");
         print("[v] = size");
         print("ret v");
@@ -424,12 +419,14 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(MessageSend n) {
         reference = true;
+        staticMethod = true;
         n.f0.accept(this);
         String objClass = this.objClass;
         String callInstance = lastExpression;
         lastExpression = "";
-
         reference = false;
+        staticMethod = false;
+
         Boolean savedEval = eval;
         eval = true;
         n.f4.accept(this);
@@ -519,7 +516,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AllocationExpression n) {
         objClass = n.f1.f0.tokenImage;
-        if (classVars.get(objClass).size() != 0) {
+        if (!staticMethod && classVars.get(objClass).size() != 0) {
             lastExpression = String.format("HeapAllocZ(%d)", classSize.get(objClass));
         } else {
             lastExpression = String.format(":empty_%s", objClass);
