@@ -231,6 +231,35 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(ArrayAssignmentStatement n) {
+        n.f0.accept(this);
+        String t1 = String.format("t.%d", varCount++);
+        print("%s = %s", lastExpression, t1);
+
+        int nullCount = this.nullCount++;
+        print("if %s goto :null%d", lastExpression, nullCount);
+        indent++;
+        print("Error(\"null pointer\")");
+        indent--;
+
+        print("null%d:", nullCount);
+
+        String t2 = String.format("t.%d", this.varCount++);
+        print("%s = [%s]", t2, t1);
+
+        n.f2.accept(this);
+        print("%s = Lt(%s %s)", t2, lastExpression, t2);
+        int boundCount = this.boundCount++;
+        print("if %s goto :bounds%d", t2, boundCount);
+        indent++;
+        print("Error(\"array index out of bounds\")");
+        indent--;
+
+        print("bounds%d:", boundCount);
+        print("%s = MulS(%s 4)", lastExpression, t2);
+        print("%s = Add(%s %s)", t2, t2, t1);
+
+        n.f5.accept(this);
+        print("[%s+4] = %s", t2, lastExpression);
     }
 
     @Override
