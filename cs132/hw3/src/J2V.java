@@ -456,6 +456,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(MessageSend n) {
         reference = true;
+        local = true;
         n.f0.accept(this);
         String objClass = this.objClass;
         String callInstance = lastExpression;
