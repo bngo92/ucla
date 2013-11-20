@@ -1,10 +1,6 @@
 import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -14,13 +10,10 @@ public class J2V extends DepthFirstVisitor {
 
     public static void main(String[] args) {
         try {
-            System.setOut(new PrintStream(new File("cs132/hw3/LinkedList.opt.vapor")));
-            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/LinkedList.java")).Goal();
+            Node root = new MiniJavaParser(System.in).Goal();
             root.accept(new J2V());
         } catch (ParseException e) {
             System.out.println(e.toString());
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
 
