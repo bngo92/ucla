@@ -14,8 +14,7 @@ public class J2V extends DepthFirstVisitor {
 
     public static void main(String[] args) {
         try {
-            System.setOut(new PrintStream(new File("cs132/hw3/LinkedList.opt.vapor")));
-            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/LinkedList.java")).Goal();
+            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/Factorial.java")).Goal();
             root.accept(new J2V());
         } catch (ParseException e) {
             System.out.println(e.toString());
@@ -306,11 +305,17 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(AndExpression n) {
+        Boolean savedEval = eval;
+        eval = true;
         n.f0.accept(this);
+
         int ss = ssCount++;
         print("if %s goto :ss%d_else", lastExpression, ss);
 
+        eval = true;
         n.f2.accept(this);
+        eval = savedEval;
+
         int varCount = this.varCount++;
         indent++;
         print("t.%d = Sub(1 %s)", varCount, lastExpression);
@@ -327,36 +332,56 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(CompareExpression n) {
+        Boolean savedEval = eval;
+        eval = true;
         n.f0.accept(this);
         String lhs = lastExpression;
+
+        eval = true;
         n.f2.accept(this);
+        eval = savedEval;
         String rhs = lastExpression;
         lastExpression = String.format("LtS(%s %s)", lhs, rhs);
     }
 
     @Override
     public void visit(PlusExpression n) {
+        Boolean savedEval = eval;
+        eval = true;
         n.f0.accept(this);
         String op1 = lastExpression;
+
+        eval = true;
         n.f2.accept(this);
+        eval = savedEval;
         String op2 = lastExpression;
         lastExpression = String.format("Add(%s %s)", op1, op2);
     }
 
     @Override
     public void visit(MinusExpression n) {
+        Boolean savedEval = eval;
+        eval = true;
         n.f0.accept(this);
         String op1 = lastExpression;
+
+        eval = true;
         n.f2.accept(this);
+        eval = savedEval;
         String op2 = lastExpression;
         lastExpression = String.format("Sub(%s %s)", op1, op2);
     }
 
     @Override
     public void visit(TimesExpression n) {
+        Boolean savedEval = eval;
+        eval = true;
         n.f0.accept(this);
         String op1 = lastExpression;
+
+        eval = true;
         n.f2.accept(this);
+        eval = savedEval;
         String op2 = lastExpression;
         lastExpression = String.format("MulS(%s %s)", op1, op2);
     }
