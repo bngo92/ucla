@@ -64,7 +64,6 @@ public class J2V extends DepthFirstVisitor {
     boolean reference;
     boolean allocArray;
     boolean local;
-    boolean staticMethod;
     String objClass;
     boolean not;
 
@@ -421,13 +420,11 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(MessageSend n) {
         reference = true;
-        staticMethod = true;
         n.f0.accept(this);
         String objClass = this.objClass;
         String callInstance = lastExpression;
         lastExpression = "";
         reference = false;
-        staticMethod = false;
 
         Boolean savedEval = eval;
         eval = true;
@@ -450,7 +447,14 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(PrimaryExpression n) {
         n.f0.accept(this);
-        if ((local || eval) && lastExpression.contains("+")) {
+        if ((local || eval) && (lastExpression.contains("+") || lastExpression.contains("HeapAllocZ"))) {
+            if (lastExpression.contains("HeapAllocZ")) {
+                print("if t.%d goto :null%d", varCount, nullCount);
+                indent++;
+                print("Error(\"null pointer\")");
+                indent--;
+                print("null%d:", nullCount++);
+            }
             print("t.%d = %s", varCount, lastExpression);
             lastExpression = String.format("t.%d", varCount++);
         }
@@ -477,13 +481,7 @@ public class J2V extends DepthFirstVisitor {
         Var var = classVars.get(classScope).get(lastExpression);
         if (var != null) {
             if (reference && var.type == VarType.REFERENCE) {
-                String varVar = var.var;
-                if (varVar.contains("+")) {
-                    int varCount = this.varCount++;
-                    print("t.%d = %s", varCount, varVar);
-                    varVar = String.format("t.%d", varCount);
-                }
-                print("if %s goto :null%d", varVar, nullCount);
+                print("if %s goto :null%d", var.var, nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
                 indent--;
@@ -524,7 +522,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AllocationExpression n) {
         objClass = n.f1.f0.tokenImage;
-        if (!staticMethod && classVars.get(objClass).size() != 0) {
+        if (classVars.get(objClass).size() != 0) {
             lastExpression = String.format("HeapAllocZ(%d)", classSize.get(objClass));
         } else {
             lastExpression = String.format(":empty_%s", objClass);
