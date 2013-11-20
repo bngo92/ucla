@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 
 public class J2V extends DepthFirstVisitor {
     private boolean eval;
+    private boolean ifNotWhile;
 
     public static void main(String[] args) {
         try {
@@ -268,8 +269,10 @@ public class J2V extends DepthFirstVisitor {
         reference = true;
         not = false;
         local = true;
+        ifNotWhile = true;
 
         n.f2.accept(this);
+        ifNotWhile = false;
         if (not)
             print("if %s goto :if%d_else", lastExpression, ifCount);
         else
@@ -334,7 +337,7 @@ public class J2V extends DepthFirstVisitor {
         not = false;
         n.f0.accept(this);
 
-        if (not) {
+        if (ifNotWhile) {
             print("if %s goto :if%d_else", lastExpression, ifCount - 1);
 
             eval = true;
