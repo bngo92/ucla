@@ -163,9 +163,12 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(VarDeclaration n) {
-        n.f0.accept(this);
-        if (!methodVars.containsKey(n.f1.f0.tokenImage))
-            methodVars.put(n.f1.f0.tokenImage, new Var(classScope, n.f1.f0.tokenImage, n.f0));
+        if (!methodVars.containsKey(n.f1.f0.tokenImage)) {
+            if (n.f0.f0.which == 3)
+                methodVars.put(n.f1.f0.tokenImage, new Var(((Identifier) n.f0.f0.choice).f0.tokenImage, n.f1.f0.tokenImage, n.f0));
+            else
+                methodVars.put(n.f1.f0.tokenImage, new Var("", n.f1.f0.tokenImage, n.f0));
+        }
     }
 
     @Override
