@@ -63,10 +63,12 @@ public class J2V extends DepthFirstVisitor {
     int ifCount = 1;
     int nullCount = 1;
     int whileCount = 1;
+    int ssCount = 1;
 
     String lastExpression;
     boolean access;
     boolean allocArray;
+    boolean local;
     String objClass;
     boolean not;
 
@@ -174,11 +176,11 @@ public class J2V extends DepthFirstVisitor {
         methodScope = String.format("%s.%s", classScope, n.f2.f0.tokenImage);
         print("func %s(this%s)", methodScope, lastExpression);
 
-        n.f6.accept(this);
+        n.f7.accept(this);
 
         indent++;
         n.f8.accept(this);
-        access = true;
+        access = false;
         n.f10.accept(this);
         print("ret %s", lastExpression);
         indent--;
@@ -220,7 +222,9 @@ public class J2V extends DepthFirstVisitor {
         access = false;
         n.f0.accept(this);
         String lhs = lastExpression;
+        local = false;
         n.f2.accept(this);
+        local = true;
         print("%s = %s", lhs, lastExpression);
     }
 
@@ -253,6 +257,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(WhileStatement n) {
         int whileCount = this.whileCount++;
         print("while%d_top:", whileCount);
+        local = true;
         n.f2.accept(this);
         print("if0 %s goto :while%d_end", lastExpression, whileCount);
         indent++;
@@ -281,6 +286,21 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(AndExpression n) {
+        n.f0.accept(this);
+        int ss = ssCount++;
+        print("if %s goto :ss%d_else", lastExpression, ss);
+        n.f2.accept(this);
+        int varCount = this.varCount++;
+        indent++;
+        print("t.%d = Sub(1 %s)", varCount, lastExpression);
+        print("goto :ss%d_end", ss);
+        indent--;
+        print("ss%d_else:", ss);
+        indent++;
+        lastExpression = String.format("t.%d", varCount);
+        print("%s = 0", lastExpression);
+        indent--;
+        print("ss%d_end:", ss);
     }
 
     @Override
@@ -362,9 +382,9 @@ public class J2V extends DepthFirstVisitor {
 
         String callInstance = lastExpression;
         lastExpression = "";
+        access = save;
         n.f4.accept(this);
         lastExpression = String.format("call :%s.%s(%s%s)", objClass, n.f2.f0.tokenImage, callInstance, lastExpression);
-        access = save;
     }
 
     @Override
@@ -381,7 +401,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(PrimaryExpression n) {
         n.f0.accept(this);
-        if (access && lastExpression.contains("+")) {
+        if (local && lastExpression.contains("+")) {
             print("t.%d = %s", varCount, lastExpression);
             lastExpression = String.format("t.%d", varCount++);
         }
