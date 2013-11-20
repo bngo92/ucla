@@ -476,7 +476,13 @@ public class J2V extends DepthFirstVisitor {
         Var var = classVars.get(classScope).get(lastExpression);
         if (var != null) {
             if (reference && var.type == VarType.REFERENCE) {
-                print("if %s goto :null%d", var.var, nullCount);
+                String varVar = var.var;
+                if (varVar.contains("+")) {
+                    int varCount = this.varCount++;
+                    print("t.%d = %s", varCount, varVar);
+                    varVar = String.format("t.%d", varCount);
+                }
+                print("if %s goto :null%d", varVar, nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
                 indent--;
