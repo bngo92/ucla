@@ -66,6 +66,7 @@ public class J2V extends DepthFirstVisitor {
     boolean local;
     String objClass;
     boolean not;
+    boolean newAlloc;
 
     public void print(String s, Object... arg) {
         StringBuilder ret = new StringBuilder();
@@ -447,15 +448,16 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(PrimaryExpression n) {
         n.f0.accept(this);
-        if ((local || eval) && (lastExpression.contains("+") || reference)) {
+        if ((local || eval) && (lastExpression.contains("+") || newAlloc)) {
             print("t.%d = %s", varCount, lastExpression);
             lastExpression = String.format("t.%d", varCount++);
-            if (reference) {
+            if (newAlloc) {
                 print("if %s goto :null%d", lastExpression, varCount, nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
                 indent--;
                 print("null%d:", nullCount++);
+                newAlloc = false;
             }
         }
     }
@@ -524,6 +526,7 @@ public class J2V extends DepthFirstVisitor {
         objClass = n.f1.f0.tokenImage;
         if (classVars.get(objClass).size() != 0) {
             lastExpression = String.format("HeapAllocZ(%d)", classSize.get(objClass));
+            newAlloc = true;
         } else {
             lastExpression = String.format(":empty_%s", objClass);
         }
