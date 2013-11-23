@@ -2,16 +2,16 @@ import syntaxtree.*;
 import visitor.GJNoArguDepthFirst;
 
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
-    final HashMap<String, MyType> classTable;
+    final LinkedHashMap<String, MyType> classTable;
     MyType classScope = null;
     MyType.Method methodScope = null;
 
     public MySymbolTable() {
-        classTable = new HashMap<String, MyType>();
+        classTable = new LinkedHashMap<String, MyType>();
         classTable.put(MyType.ARRAY.name, MyType.ARRAY);
         classTable.put(MyType.BOOLEAN.name, MyType.ARRAY);
         classTable.put(MyType.INTEGER.name, MyType.INTEGER);
