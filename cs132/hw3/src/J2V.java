@@ -112,16 +112,14 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(MethodDeclaration n) {
         varCount = 0;
-
-        lastExpression = "";
-        n.f4.accept(this);
         methodScope = String.format("%s.%s", table.classScope.name, n.f2.f0.tokenImage);
-        print("func %s(this%s)", methodScope, lastExpression);
+        print("func %s(this%s)", methodScope, table.classScope.getMethodArgsString(n.f2.f0.tokenImage));
 
         indent++;
         n.f8.accept(this);
 
         reference = false;
+        lastExpression = "";
         n.f10.accept(this);
         print("ret %s", lastExpression);
         indent--;

@@ -56,6 +56,14 @@ public class MyType {
         return ret.args.values();
     }
 
+    public String getMethodArgsString(String method) {
+        String s = "";
+        for (MyType type : getMethodArgs(method)) {
+            s += type.name + " ";
+        }
+        return s.substring(0, s.length() - 1);
+    }
+
     public String getOffset() {
         if (offset != null)
             return offset;
