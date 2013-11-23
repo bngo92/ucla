@@ -62,6 +62,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Goal n) {
+        print("");
         for (MyType type : table.classTable.values()) {
             if (type != MyType.TRUE && type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
                 print("const empty_%s", type.name);
@@ -87,6 +88,16 @@ public class J2V extends DepthFirstVisitor {
         print("ret");
         indent--;
         print("");
+    }
+
+    @Override
+    public void visit(ClassDeclaration n) {
+        n.f4.accept(this);
+    }
+
+    @Override
+    public void visit(ClassExtendsDeclaration n) {
+        n.f6.accept(this);
     }
 
     @Override
