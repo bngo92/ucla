@@ -57,11 +57,11 @@ public class MyType {
     }
 
     public String getMethodArgsString(String method) {
-        String s = "";
+        String s = "this";
         for (MyType type : getMethodArgs(method)) {
-            s += type.name + " ";
+            s += " " + type.name;
         }
-        return s.substring(0, s.length() - 1);
+        return s;
     }
 
     public String getOffset() {
