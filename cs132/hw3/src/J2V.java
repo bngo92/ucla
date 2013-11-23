@@ -76,6 +76,7 @@ public class J2V extends DepthFirstVisitor {
 
         print("");
         n.f0.accept(this);
+        print("");
         n.f1.accept(this);
         print("");
 
@@ -92,7 +93,20 @@ public class J2V extends DepthFirstVisitor {
         n.f15.accept(this);
         print("ret");
         indent--;
-        print("");
+    }
+
+    @Override
+    public void visit(ClassDeclaration n) {
+        table.setClassScope(n.f1.f0.tokenImage);
+        n.f4.accept(this);
+        table.clearClassScope();
+    }
+
+    @Override
+    public void visit(ClassExtendsDeclaration n) {
+        table.setClassScope(n.f1.f0.tokenImage);
+        n.f6.accept(this);
+        table.clearClassScope();
     }
 
     @Override
@@ -103,8 +117,6 @@ public class J2V extends DepthFirstVisitor {
         n.f4.accept(this);
         methodScope = String.format("%s.%s", table.classScope.name, n.f2.f0.tokenImage);
         print("func %s(this%s)", methodScope, lastExpression);
-
-        n.f7.accept(this);
 
         indent++;
         n.f8.accept(this);
