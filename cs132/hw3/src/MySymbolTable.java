@@ -98,6 +98,7 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
             return methodScope.addVar(var, varType);
         if (classScope.vars.containsKey(var))
             return false;
+        varType.offset = String.format("[this+%d]", (classScope.vars.size() - 1) * 4);
         classScope.vars.put(var, varType);
         return true;
     }
@@ -172,7 +173,7 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         methodScope = classScope.addMethod("main", MyType.TRUE);
         methodScope.addArg(n.f11.f0.tokenImage, MyType.TRUE);
         Boolean ret = n.f14.accept(this);
-        methodScope = null;
+        clearMethodScope();
         clearClassScope();
         return ret;
     }
@@ -207,8 +208,7 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         if (n.f5.accept(this) == null)
             return null;
 
-        Boolean ret = n.f6.accept(this);
-        return ret;
+        return n.f6.accept(this);
     }
 
     @Override

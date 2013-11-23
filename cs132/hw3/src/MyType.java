@@ -93,7 +93,6 @@ public class MyType {
         public boolean addVar(String var, MyType type) {
             if (args.containsKey(var) || vars.containsKey(var))
                 return false;
-            type.offset = String.format("[this+%d]", (vars.size() - 1) * 4);
             vars.put(var, type);
             return true;
         }

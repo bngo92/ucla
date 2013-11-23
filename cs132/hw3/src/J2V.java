@@ -23,9 +23,6 @@ public class J2V extends DepthFirstVisitor {
     MySymbolTable table;
 
     int indent;
-
-    String methodScope;
-
     int varCount;
     int boundCount = 1;
     int ifCount = 1;
