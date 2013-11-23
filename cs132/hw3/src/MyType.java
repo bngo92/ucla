@@ -21,6 +21,7 @@ public class MyType {
         found = true;
         vars = new HashMap<String, MyType>();
         methods = new HashMap<String, Method>();
+        varOffsets = new HashMap<String, String>();
     }
 
     public Method addMethod(String method, MyType returnType) {
