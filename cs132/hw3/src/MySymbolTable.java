@@ -54,6 +54,19 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         return null;
     }
 
+    public String getOffset(String var) {
+        String ret;
+        MyType scope = classScope;
+        while (scope != null) {
+            ret = scope.varOffsets.get(var);
+            if (ret != null)
+                return ret;
+
+            scope = scope.parent;
+        }
+        return var;
+    }
+
     public boolean isSubclass(MyType child, MyType parent) {
         while (child != parent) {
             child = child.parent;
@@ -98,8 +111,8 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
             return methodScope.addVar(var, varType);
         if (classScope.vars.containsKey(var))
             return false;
-        varType.offset = String.format("[this+%d]", (classScope.vars.size() - 1) * 4);
         classScope.vars.put(var, varType);
+        classScope.varOffsets.put(var, String.format("[this+%d]", (classScope.vars.size() - 1) * 4));
         return true;
     }
 

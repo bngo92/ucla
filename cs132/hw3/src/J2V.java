@@ -441,11 +441,11 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Identifier n) {
-        lastExpression = n.f0.tokenImage;
+        lastExpression = table.getOffset(n.f0.tokenImage);
         MyType type = table.getVarType(lastExpression);
         if (type != null) {
             if (reference && type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
-                print("if %s goto :null%d", type.getOffset(), nullCount);
+                print("if %s goto :null%d", lastExpression, nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
                 indent--;
@@ -472,7 +472,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AllocationExpression n) {
         objClass = n.f1.f0.tokenImage;
-        int size = table.classTable.get(objClass).vars.size();
+        int size = table.classTable.get(objClass).vars.size() * 4;
         if (size != 0) {
             lastExpression = String.format("HeapAllocZ(%d)", size);
             newAlloc = true;

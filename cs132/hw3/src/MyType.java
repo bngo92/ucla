@@ -9,9 +9,9 @@ public class MyType {
     public static MyType INTEGER = new MyType("Integer");
     public String name;
     public MyType parent;
-    public String offset;
     public boolean found;
     public HashMap<String, MyType> vars;
+    public HashMap<String, String> varOffsets;
     public HashMap<String, Method> methods;
 
     private MyType() {}
@@ -62,12 +62,6 @@ public class MyType {
             s += " " + type.name;
         }
         return s;
-    }
-
-    public String getOffset() {
-        if (offset != null)
-            return offset;
-        return name;
     }
 
     public class Method {
