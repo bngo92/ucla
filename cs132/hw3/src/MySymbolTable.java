@@ -25,6 +25,18 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         this.classScope = null;
     }
 
+    public void setMethodScope(String methodScope) {
+        this.methodScope = classScope.getMethod(methodScope);
+    }
+
+    public String getMethodScope() {
+        return String.format("%s.%s", classScope.name, methodScope.name);
+    }
+
+    public void clearMethodScope() {
+        this.methodScope = null;
+    }
+
     public MyType getVarType(String var) {
         MyType ret;
         MyType scope = classScope;
@@ -210,11 +222,11 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
     public Boolean visit(MethodDeclaration n) {
         if (!addMethod(n.f2.f0.tokenImage, type(n.f1)))
             return null;
-        methodScope = classScope.getMethod(n.f2.f0.tokenImage);
+        setMethodScope(n.f2.f0.tokenImage);
         if (n.f4.accept(this) == null)
             return null;
         Boolean ret = n.f7.accept(this);
-        methodScope = null;
+        clearMethodScope();
         return ret;
     }
 
