@@ -64,7 +64,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(Goal n) {
         for (MyType type : table.classTable.values()) {
             if (type != MyType.TRUE && type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
-                System.out.println(String.format("const empty_%s", type));
+                print("const empty_%s", type.name);
                 print("");
             }
         }
