@@ -1,10 +1,6 @@
 import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-
 public class J2V extends DepthFirstVisitor {
     private boolean eval;
     private boolean ifNotWhile;
@@ -12,46 +8,22 @@ public class J2V extends DepthFirstVisitor {
     public static void main(String[] args) {
         try {
             Node root = new MiniJavaParser(System.in).Goal();
-            root.accept(new J2V());
+            MySymbolTable table = new MySymbolTable();
+            root.accept(table);
+            root.accept(new J2V(table));
         } catch (ParseException e) {
             System.out.println(e.toString());
         }
     }
 
-    enum VarType {
-        NONE, REFERENCE, ARRAY
+    J2V(MySymbolTable table) {
+        this.table = table;
     }
 
-    class Var {
-        String classname;
-        String var;
-        VarType type;
+    MySymbolTable table;
 
-        Var(String classname, String var, Type type) {
-            this.classname = classname;
-            this.var = var;
-            switch (type.f0.which) {
-                case 3:
-                    this.type = VarType.REFERENCE;
-                    break;
-                case 0:
-                    this.type = VarType.ARRAY;
-                    break;
-                default:
-                    this.type = VarType.NONE;
-                    break;
-            }
-        }
-    }
-
-    HashMap<String, LinkedHashMap<String, Var>> classVars;
-    HashMap<String, Integer> classSize;
-    LinkedHashMap<String, Var> methodVars;
-
-    ArrayDeque<String> strings;
     int indent;
 
-    String classScope;
     String methodScope;
 
     int varCount;
@@ -73,7 +45,7 @@ public class J2V extends DepthFirstVisitor {
         StringBuilder ret = new StringBuilder();
         for (int i = 0; i < indent * 2; i++)
             ret.append(' ');
-        strings.add(String.format(ret + s, arg));
+        System.out.println(String.format(ret + s, arg));
     }
 
     private void printArrayAlloc() {
@@ -90,42 +62,17 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Goal n) {
-        classVars = new HashMap<String, LinkedHashMap<String, Var>>();
-        classSize = new HashMap<String, Integer>();
-        for (Node node : n.f1.nodes) {
-            TypeDeclaration type = (TypeDeclaration) node;
-            NodeListOptional list;
-            String name;
-            if (type.f0.which == 0) {
-                name = ((ClassDeclaration) type.f0.choice).f1.f0.tokenImage;
-                list = ((ClassDeclaration) type.f0.choice).f3;
-            } else {
-                name = ((ClassExtendsDeclaration) type.f0.choice).f1.f0.tokenImage;
-                list = ((ClassExtendsDeclaration) type.f0.choice).f5;
-            }
-
-            LinkedHashMap<String, Var> vars = new LinkedHashMap<String, Var>();
-            int offset = 0;
-            for (Node varNode : list.nodes) {
-                VarDeclaration var = (VarDeclaration) varNode;
-                vars.put(var.f1.f0.tokenImage, new Var(name, String.format("[this+%d]", offset), var.f0));
-                offset += 4;
-            }
-            classVars.put(name, vars);
-            classSize.put(name, offset);
+        for (String type : table.classTable.keySet()) {
+            System.out.println(String.format("const empty_%s", type));
+            print("");
         }
-
-        strings = new ArrayDeque<String>();
-        System.out.println("");
+        print("");
         n.f0.accept(this);
         n.f1.accept(this);
-        System.out.println("");
+        print("");
 
         if (allocArray)
             printArrayAlloc();
-        strings.removeLast();
-        for (String s: strings)
-            System.out.println(s);
     }
 
     @Override
@@ -141,39 +88,12 @@ public class J2V extends DepthFirstVisitor {
     }
 
     @Override
-    public void visit(ClassDeclaration n) {
-        classScope = n.f1.f0.tokenImage;
-        System.out.println(String.format("const empty_%s", classScope));
-        System.out.println("");
-        n.f4.accept(this);
-    }
-
-    @Override
-    public void visit(ClassExtendsDeclaration n) {
-        classScope = n.f1.f0.tokenImage;
-        System.out.println(String.format("const empty_%s", classScope));
-        System.out.println("");
-        n.f6.accept(this);
-    }
-
-    @Override
-    public void visit(VarDeclaration n) {
-        if (!methodVars.containsKey(n.f1.f0.tokenImage)) {
-            if (n.f0.f0.which == 3)
-                methodVars.put(n.f1.f0.tokenImage, new Var(((Identifier) n.f0.f0.choice).f0.tokenImage, n.f1.f0.tokenImage, n.f0));
-            else
-                methodVars.put(n.f1.f0.tokenImage, new Var("", n.f1.f0.tokenImage, n.f0));
-        }
-    }
-
-    @Override
     public void visit(MethodDeclaration n) {
         varCount = 0;
 
-        methodVars = new LinkedHashMap<String, Var>();
         lastExpression = "";
         n.f4.accept(this);
-        methodScope = String.format("%s.%s", classScope, n.f2.f0.tokenImage);
+        methodScope = String.format("%s.%s", table.classScope.name, n.f2.f0.tokenImage);
         print("func %s(this%s)", methodScope, lastExpression);
 
         n.f7.accept(this);
@@ -202,20 +122,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(FormalParameter n) {
         n.f0.accept(this);
-        methodVars.put(n.f1.f0.tokenImage, new Var(lastExpression, n.f1.f0.tokenImage, n.f0));
         lastExpression = n.f1.f0.tokenImage;
-    }
-
-    @Override
-    public void visit(ArrayType n) {
-    }
-
-    @Override
-    public void visit(BooleanType n) {
-    }
-
-    @Override
-    public void visit(IntegerType n) {
     }
 
     @Override
@@ -519,37 +426,23 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(Identifier n) {
         lastExpression = n.f0.tokenImage;
-        Var var = classVars.get(classScope).get(lastExpression);
-        if (var != null) {
-            if (reference && var.type == VarType.REFERENCE) {
-                print("if %s goto :null%d", var.var, nullCount);
+        MyType type = table.getVarType(lastExpression);
+        if (type != null) {
+            if (reference && type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
+                print("if %s goto :null%d", type.getOffset(), nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
                 indent--;
                 print("null%d:", nullCount++);
             }
-            lastExpression = var.var;
-            return;
-        }
-
-        var = methodVars.get(lastExpression);
-        if (var != null) {
-            if (reference && var.type == VarType.REFERENCE) {
-                print("if %s goto :null%d", var.var, nullCount);
-                indent++;
-                print("Error(\"null pointer\")");
-                indent--;
-                print("null%d:", nullCount++);
-            }
-            objClass = var.classname;
-            lastExpression = var.var;
+            objClass = type.name;
         }
     }
 
     @Override
     public void visit(ThisExpression n) {
         lastExpression = "this";
-        objClass = classScope;
+        objClass = table.classScope.name;
     }
 
     @Override
@@ -563,8 +456,9 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AllocationExpression n) {
         objClass = n.f1.f0.tokenImage;
-        if (classVars.get(objClass).size() != 0) {
-            lastExpression = String.format("HeapAllocZ(%d)", classSize.get(objClass));
+        int size = table.classTable.get(objClass).vars.size();
+        if (size != 0) {
+            lastExpression = String.format("HeapAllocZ(%d)", size);
             newAlloc = true;
         } else {
             lastExpression = String.format(":empty_%s", objClass);
