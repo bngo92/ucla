@@ -416,7 +416,16 @@ public class J2V extends DepthFirstVisitor {
         eval = true;
         n.f4.accept(this);
         eval = savedEval;
-        lastExpression = String.format("call :%s.%s(%s%s)", objClass, n.f2.f0.tokenImage, callInstance, lastExpression);
+
+        HashMap<String, Integer> virtualMethodTable = virtualMethodTables.get(objClass);
+        if (objClass == null) {
+            lastExpression = String.format("call :%s.%s(%s%s)", objClass, n.f2.f0.tokenImage, callInstance, lastExpression);
+        } else {
+            String var = String.format("t.%d", varCount++);
+            print("%s = [%s]", var, callInstance);
+            print("%s = [%s+%d]", var, var, virtualMethodTable.get(n.f2.f0.tokenImage));
+            lastExpression = String.format("call %s(%s%s)", var, callInstance, lastExpression);
+        }
     }
 
     @Override
