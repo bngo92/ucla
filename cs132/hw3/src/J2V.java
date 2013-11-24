@@ -47,6 +47,15 @@ public class J2V extends DepthFirstVisitor {
         System.out.println(String.format(ret + s, arg));
     }
 
+    private void printNullPointer(String var) {
+        int nullCount = this.nullCount++;
+        print("if %s goto :%d", var, nullCount);
+        indent++;
+        print("Error(\"null pointer\")");
+        indent--;
+        print("null%d:", nullCount);
+    }
+
     private void printArrayAlloc() {
         print("func AllocArray(size)");
         indent++;
@@ -468,8 +477,10 @@ public class J2V extends DepthFirstVisitor {
 		lastExpression = identifier;
 
         Integer offset = table.classScope.varOffsets.get(identifier);
-        if (offset != null)
+        if (offset != null) {
             lastExpression = String.format("[%s+%d]", objClass, offset);
+            reference = true;
+        }
 
         MyType type = table.getVarType(identifier);
         if (type != null) {
@@ -482,8 +493,6 @@ public class J2V extends DepthFirstVisitor {
             }
             objClass = type.name;
         }
-        if (objClass.equals(table.classScope.name))
-            objClass = "this";
     }
 
     @Override
