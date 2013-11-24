@@ -456,6 +456,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(Identifier n) {
         objClass = table.classScope.name;
+        lastExpression = objClass;
         Integer offset = table.classTable.get(lastExpression).memoryOffsets.get(n.f0.tokenImage);
         lastExpression = n.f0.tokenImage;
 
