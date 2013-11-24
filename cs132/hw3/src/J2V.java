@@ -418,7 +418,7 @@ public class J2V extends DepthFirstVisitor {
         eval = savedEval;
 
         HashMap<String, Integer> virtualMethodTable = virtualMethodTables.get(objClass);
-        if (objClass == null) {
+        if (virtualMethodTable == null) {
             lastExpression = String.format("call :%s.%s(%s%s)", objClass, n.f2.f0.tokenImage, callInstance, lastExpression);
         } else {
             String var = String.format("t.%d", varCount++);
