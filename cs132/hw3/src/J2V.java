@@ -455,7 +455,15 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Identifier n) {
-        lastExpression = table.getOffset(n.f0.tokenImage);
+        objClass = table.classScope.name;
+        Integer offset = table.classTable.get(lastExpression).memoryOffsets.get(n.f0.tokenImage);
+        lastExpression = n.f0.tokenImage;
+
+        if (objClass.equals(table.classScope.name))
+            objClass = "this";
+        if (offset != null)
+            lastExpression = String.format("[%s+%d]", objClass, offset);
+
         MyType type = table.getVarType(lastExpression);
         if (type != null) {
             if (reference && type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
@@ -486,7 +494,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AllocationExpression n) {
         objClass = n.f1.f0.tokenImage;
-        int size = table.classTable.get(objClass).vars.size() * 4;
+        int size = table.classTable.get(objClass).memoryOffsets.size() * 4;
         if (size != 0) {
             lastExpression = String.format("HeapAllocZ(%d)", size);
             newAlloc = true;

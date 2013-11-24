@@ -1,5 +1,4 @@
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class MyType {
@@ -10,18 +9,18 @@ public class MyType {
     public String name;
     public MyType parent;
     public boolean found;
-    public HashMap<String, MyType> vars;
-    public HashMap<String, String> varOffsets;
-    public HashMap<String, Method> methods;
+    public LinkedHashMap<String, MyType> vars;
+    public LinkedHashMap<String, Integer> memoryOffsets;
+    public LinkedHashMap<String, Method> methods;
 
     private MyType() {}
 
     public MyType(String name) {
         this.name = name;
         found = true;
-        vars = new HashMap<String, MyType>();
-        methods = new HashMap<String, Method>();
-        varOffsets = new HashMap<String, String>();
+        vars = new LinkedHashMap<String, MyType>();
+        methods = new LinkedHashMap<String, Method>();
+        memoryOffsets = new LinkedHashMap<String, Integer>();
     }
 
     public Method addMethod(String method, MyType returnType) {

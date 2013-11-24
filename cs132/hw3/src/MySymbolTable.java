@@ -4,6 +4,7 @@ import visitor.GJNoArguDepthFirst;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
     final LinkedHashMap<String, MyType> classTable;
@@ -54,19 +55,6 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         return null;
     }
 
-    public String getOffset(String var) {
-        String ret;
-        MyType scope = classScope;
-        while (scope != null) {
-            ret = scope.varOffsets.get(var);
-            if (ret != null)
-                return ret;
-
-            scope = scope.parent;
-        }
-        return var;
-    }
-
     public boolean isSubclass(MyType child, MyType parent) {
         while (child != parent) {
             child = child.parent;
@@ -112,7 +100,6 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         if (classScope.vars.containsKey(var))
             return false;
         classScope.vars.put(var, varType);
-        classScope.varOffsets.put(var, String.format("[this+%d]", (classScope.vars.size() - 1) * 4));
         return true;
     }
 
@@ -146,6 +133,22 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         return false;
     }
 
+    void updateOffsets() {
+        for (MyType type : classTable.values()) {
+            MyType p_type = type;
+            while (p_type != null) {
+                int i = 0;
+                for (MyType.Method method : p_type.methods.values())
+                    if (method.override && !type.memoryOffsets.containsKey(method.name))
+                        type.memoryOffsets.put(method.name, i++);
+                for (Map.Entry<String, MyType> entry : p_type.vars.entrySet())
+                    if (!type.memoryOffsets.containsKey(entry.getKey()))
+                        type.memoryOffsets.put(entry.getKey(), i++);
+                p_type = p_type.parent;
+            }
+        }
+    }
+
     @Override
     public Boolean visit(Goal n) {
         if (n.f0.accept(this) == null)
@@ -157,6 +160,7 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
         for (MyType type : classTable.values())
             if (!type.found)
                 return null;
+        updateOffsets();
         return true;
     }
 
