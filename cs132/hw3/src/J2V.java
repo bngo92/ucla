@@ -1,6 +1,8 @@
 import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
+import java.util.ArrayList;
+
 public class J2V extends DepthFirstVisitor {
     private boolean eval;
     private boolean ifNotWhile;
@@ -64,7 +66,19 @@ public class J2V extends DepthFirstVisitor {
         for (MyType type : table.classTable.values()) {
             if (type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
                 if (!skip) {
-                    print("const empty_%s", type.name);
+                    ArrayList<String> overloadedMethods = new ArrayList<String>();
+                    for (MyType.Method method : type.methods.values())
+                        if (method.override)
+                            overloadedMethods.add(method.name);
+                    if (overloadedMethods.isEmpty()) {
+                        print("const empty_%s", type.name);
+                    } else {
+                        print("const vmt_%s", type.name);
+                        indent++;
+                        for (String s : overloadedMethods)
+                            print(":%s.%s", type.name, s);
+                        indent--;
+                    }
                     print("");
                 }
                 skip = false;

@@ -136,6 +136,8 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
                             return true;
                         if (parent.methods.get(childMethod.name).returnType != childMethod.returnType)
                             return true;
+                        childMethod.override = true;
+                        parentMethod.override = true;
                     }
                 }
                 parent = parent.parent;

@@ -70,12 +70,14 @@ public class MyType {
         final MyType returnType;
         final LinkedHashMap<String, MyType> args;
         final LinkedHashMap<String, MyType> vars;
+        boolean override;
 
         Method(String name, MyType returnType) {
             this.name = name;
             this.returnType = returnType;
             args = new LinkedHashMap<String, MyType>();
             vars = new LinkedHashMap<String, MyType>();
+            override = false;
         }
 
         public boolean addArg(String arg, MyType type) {
