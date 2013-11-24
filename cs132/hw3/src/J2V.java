@@ -503,7 +503,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AllocationExpression n) {
         objClass = n.f1.f0.tokenImage;
-        int size = table.classTable.get(objClass).varOffsets.size() * 4;
+        int size = (table.classTable.get(objClass).methodOffsets.size() + table.classTable.get(objClass).varOffsets.size()) * 4;
         if (size != 0) {
             lastExpression = String.format("HeapAllocZ(%d)", size);
             HashMap<String, Integer> virtualMethodTable = table.classTable.get(objClass).methodOffsets;
