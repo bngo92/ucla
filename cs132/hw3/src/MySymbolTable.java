@@ -143,7 +143,9 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
                         type.methodOffsets.put(method.name, i);
                         i += 4;
                     }
-                i = 0;
+
+                if (i != 0)
+                    i = 4;
                 for (Map.Entry<String, MyType> entry : p_type.vars.entrySet())
                     if (!type.varOffsets.containsKey(entry.getKey())) {
                         type.varOffsets.put(entry.getKey(), i);
