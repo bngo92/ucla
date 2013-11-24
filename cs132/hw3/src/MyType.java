@@ -10,8 +10,9 @@ public class MyType {
     public MyType parent;
     public boolean found;
     public LinkedHashMap<String, MyType> vars;
-    public LinkedHashMap<String, Integer> memoryOffsets;
+    public LinkedHashMap<String, Integer> varOffsets;
     public LinkedHashMap<String, Method> methods;
+    public LinkedHashMap<String, Integer> methodOffsets;
 
     private MyType() {}
 
@@ -20,7 +21,8 @@ public class MyType {
         found = true;
         vars = new LinkedHashMap<String, MyType>();
         methods = new LinkedHashMap<String, Method>();
-        memoryOffsets = new LinkedHashMap<String, Integer>();
+        varOffsets = new LinkedHashMap<String, Integer>();
+        methodOffsets = new LinkedHashMap<String, Integer>();
     }
 
     public Method addMethod(String method, MyType returnType) {

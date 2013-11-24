@@ -1,9 +1,7 @@
 import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 
 public class J2V extends DepthFirstVisitor {
     private boolean eval;
@@ -25,7 +23,6 @@ public class J2V extends DepthFirstVisitor {
     }
 
     MySymbolTable table;
-    LinkedHashMap<String, HashMap<String, Integer>> virtualMethodTables;
 
     int indent;
     int varCount;
@@ -64,26 +61,17 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Goal n) {
-        virtualMethodTables = new LinkedHashMap<String, HashMap<String, Integer>>();
         print("");
         Boolean skip = true;
         for (MyType type : table.classTable.values()) {
             if (type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
                 if (!skip) {
-                    ArrayList<String> overloadedMethods = new ArrayList<String>();
-                    for (MyType.Method method : type.methods.values())
-                        if (method.override)
-                            overloadedMethods.add(method.name);
-                    if (overloadedMethods.isEmpty()) {
+                    if (type.methodOffsets.isEmpty()) {
                         print("const empty_%s", type.name);
                     } else {
-                        HashMap<String, Integer> virtualMethodTable = new HashMap<String, Integer>();
-                        virtualMethodTables.put(type.name, virtualMethodTable);
-
                         print("const vmt_%s", type.name);
                         indent++;
-                        for (String s : overloadedMethods) {
-                            virtualMethodTable.put(s, type.memoryOffsets.get(s));
+                        for (String s : type.methodOffsets.keySet()) {
                             print(":%s.%s", type.name, s);
                         }
                         indent--;
@@ -419,8 +407,8 @@ public class J2V extends DepthFirstVisitor {
         n.f4.accept(this);
         eval = savedEval;
 
-        HashMap<String, Integer> virtualMethodTable = virtualMethodTables.get(objClass);
-        if (virtualMethodTable == null) {
+        HashMap virtualMethodTable = table.classTable.get(objClass).methodOffsets;
+        if (virtualMethodTable.isEmpty() || !virtualMethodTable.containsKey(n.f2.f0.tokenImage)) {
             lastExpression = String.format("call :%s.%s(%s%s)", objClass, n.f2.f0.tokenImage, callInstance, lastExpression);
         } else {
             String var = String.format("t.%d", varCount++);
@@ -477,7 +465,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(Identifier n) {
         objClass = table.classScope.name;
         lastExpression = objClass;
-        Integer offset = table.classTable.get(lastExpression).memoryOffsets.get(n.f0.tokenImage);
+        Integer offset = table.classTable.get(lastExpression).varOffsets.get(n.f0.tokenImage);
         lastExpression = n.f0.tokenImage;
 
         if (objClass.equals(table.classScope.name))
@@ -515,11 +503,11 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AllocationExpression n) {
         objClass = n.f1.f0.tokenImage;
-        int size = table.classTable.get(objClass).memoryOffsets.size() * 4;
+        int size = table.classTable.get(objClass).varOffsets.size() * 4;
         if (size != 0) {
             lastExpression = String.format("HeapAllocZ(%d)", size);
-            HashMap<String, Integer> virtualMethodTable = virtualMethodTables.get(objClass);
-            if (virtualMethodTable != null) {
+            HashMap<String, Integer> virtualMethodTable = table.classTable.get(objClass).methodOffsets;
+            if (!virtualMethodTable.isEmpty()) {
                 String var = String.format("t.%d", varCount++);
                 print("%s = %s", var, lastExpression);
                 print("[%s] = :vmt_%s", var, objClass);

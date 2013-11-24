@@ -139,13 +139,14 @@ public class MySymbolTable extends GJNoArguDepthFirst<Boolean> {
             while (p_type != null) {
                 int i = 0;
                 for (MyType.Method method : p_type.methods.values())
-                    if (method.override && !type.memoryOffsets.containsKey(method.name)) {
-                        type.memoryOffsets.put(method.name, i);
+                    if (method.override && !type.varOffsets.containsKey(method.name)) {
+                        type.methodOffsets.put(method.name, i);
                         i += 4;
                     }
+                i = 4;
                 for (Map.Entry<String, MyType> entry : p_type.vars.entrySet())
-                    if (!type.memoryOffsets.containsKey(entry.getKey())) {
-                        type.memoryOffsets.put(entry.getKey(), i);
+                    if (!type.varOffsets.containsKey(entry.getKey())) {
+                        type.varOffsets.put(entry.getKey(), i);
                         i += 4;
                     }
                 p_type = p_type.parent;
