@@ -408,6 +408,8 @@ public class J2V extends DepthFirstVisitor {
         local = true;
         n.f0.accept(this);
         String objClass = this.objClass;
+        if (objClass == "this")
+            objClass = table.classScope.name;
         String callInstance = lastExpression;
         lastExpression = "";
         reference = false;
