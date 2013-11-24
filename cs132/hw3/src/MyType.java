@@ -59,8 +59,8 @@ public class MyType {
 
     public String getMethodArgsString(String method) {
         String s = "this";
-        for (MyType type : getMethodArgs(method)) {
-            s += " " + type.name;
+        for (String name : getMethod(method).args.keySet()) {
+            s += " " + name;
         }
         return s;
     }
