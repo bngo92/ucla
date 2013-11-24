@@ -396,7 +396,7 @@ public class J2V extends DepthFirstVisitor {
         local = true;
         n.f0.accept(this);
         String objClass = this.objClass;
-        if (objClass == "this")
+        if (objClass.equals("this"))
             objClass = table.classScope.name;
         String callInstance = lastExpression;
         lastExpression = "";
@@ -463,9 +463,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Identifier n) {
-        objClass = table.classScope.name;
-        lastExpression = objClass;
-        Integer offset = table.classTable.get(lastExpression).varOffsets.get(n.f0.tokenImage);
+        Integer offset = table.classScope.varOffsets.get(n.f0.tokenImage);
         lastExpression = n.f0.tokenImage;
 
         if (objClass.equals(table.classScope.name))
