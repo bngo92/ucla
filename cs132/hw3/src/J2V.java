@@ -472,19 +472,22 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Identifier n) {
-		objClass = "this";
-		String identifier = n.f0.tokenImage;
-		lastExpression = identifier;
+        objClass = "this";
+        String identifier = n.f0.tokenImage;
+        lastExpression = identifier;
 
         Integer offset = table.classScope.varOffsets.get(identifier);
         if (offset != null) {
-            lastExpression = String.format("t.%d", varCount++);
-            print("%s = [%s+%d]", lastExpression, objClass, offset);
+            lastExpression = String.format("[%s+%d]", objClass, offset);
         }
 
         MyType type = table.getVarType(identifier);
         if (type != null) {
             if (reference && type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
+                if (offset != null) {
+                    lastExpression = String.format("t.%d", varCount++);
+                    print("%s = [%s+%d]", lastExpression, objClass, offset);
+                }
                 print("if %s goto :null%d", lastExpression, nullCount);
                 indent++;
                 print("Error(\"null pointer\")");
