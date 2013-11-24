@@ -2,6 +2,8 @@ import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class J2V extends DepthFirstVisitor {
     private boolean eval;
@@ -23,6 +25,7 @@ public class J2V extends DepthFirstVisitor {
     }
 
     MySymbolTable table;
+    LinkedHashMap<String, HashMap<String, Integer>> virtualMethodTables;
 
     int indent;
     int varCount;
@@ -61,6 +64,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Goal n) {
+        virtualMethodTables = new LinkedHashMap<String, HashMap<String, Integer>>();
         print("");
         Boolean skip = true;
         for (MyType type : table.classTable.values()) {
@@ -73,10 +77,15 @@ public class J2V extends DepthFirstVisitor {
                     if (overloadedMethods.isEmpty()) {
                         print("const empty_%s", type.name);
                     } else {
+                        HashMap<String, Integer> virtualMethodTable = new HashMap<String, Integer>();
+                        virtualMethodTables.put(type.name, virtualMethodTable);
+
                         print("const vmt_%s", type.name);
                         indent++;
-                        for (String s : overloadedMethods)
+                        for (String s : overloadedMethods) {
+                            virtualMethodTable.put(s, type.memoryOffsets.get(s));
                             print(":%s.%s", type.name, s);
+                        }
                         indent--;
                     }
                     print("");
@@ -498,6 +507,13 @@ public class J2V extends DepthFirstVisitor {
         int size = table.classTable.get(objClass).memoryOffsets.size() * 4;
         if (size != 0) {
             lastExpression = String.format("HeapAllocZ(%d)", size);
+            HashMap<String, Integer> virtualMethodTable = virtualMethodTables.get(objClass);
+            if (virtualMethodTable != null) {
+                String var = String.format("t.%d", varCount++);
+                print("%s = %s", var, lastExpression);
+                print("[%s] = :vmt_%s", var, objClass);
+                lastExpression = var;
+            }
             newAlloc = true;
         } else {
             lastExpression = String.format(":empty_%s", objClass);
