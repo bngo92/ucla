@@ -466,8 +466,6 @@ public class J2V extends DepthFirstVisitor {
         Integer offset = table.classScope.varOffsets.get(n.f0.tokenImage);
         lastExpression = n.f0.tokenImage;
 
-        if (objClass.equals(table.classScope.name))
-            objClass = "this";
         if (offset != null)
             lastExpression = String.format("[%s+%d]", objClass, offset);
 
@@ -482,6 +480,8 @@ public class J2V extends DepthFirstVisitor {
             }
             objClass = type.name;
         }
+        if (objClass.equals(table.classScope.name))
+            objClass = "this";
     }
 
     @Override
