@@ -46,7 +46,7 @@ public class J2V extends DepthFirstVisitor {
 
     private void printNullPointerCheck(String var) {
         int nullCount = this.nullCount++;
-        print("if %s goto :%d", var, nullCount);
+        print("if %s goto :null%d", var, nullCount);
         indent++;
         print("Error(\"null pointer\")");
         indent--;
