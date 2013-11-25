@@ -156,28 +156,6 @@ public class J2V extends DepthFirstVisitor {
     }
 
     @Override
-    public void visit(FormalParameterList n) {
-        n.f0.accept(this);
-        String expression = " " + lastExpression;
-        for (Node node : n.f1.nodes) {
-            node.accept(this);
-            expression += " " + lastExpression;
-        }
-        lastExpression = expression;
-    }
-
-    @Override
-    public void visit(FormalParameter n) {
-        n.f0.accept(this);
-        lastExpression = n.f1.f0.tokenImage;
-    }
-
-    @Override
-    public void visit(Statement n) {
-        n.f0.accept(this);
-    }
-
-    @Override
     public void visit(AssignmentStatement n) {
         n.f0.accept(this);
         String lhs = lastExpression;
