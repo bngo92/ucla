@@ -179,7 +179,7 @@ public class J2V extends DepthFirstVisitor {
 
         localExpressionStack.push(false);
         n.f2.accept(this);
-        if (lhs.contains("+") && lastExpression.contains("call :")) {
+        if (lhs.contains("+") && (lastExpression.contains("call :") || lastExpression.contains("+"))) {
             String var = newVar();
             print("%s = %s", var, lastExpression);
             print("%s = %s", lhs, var);
