@@ -114,7 +114,6 @@ public class J2V extends DepthFirstVisitor {
     public void visit(ClassDeclaration n) {
         table.setClassScope(n.f1.f0.tokenImage);
 
-        print("");
         n.f4.accept(this);
 
         table.clearClassScope();
@@ -124,7 +123,6 @@ public class J2V extends DepthFirstVisitor {
     public void visit(ClassExtendsDeclaration n) {
         table.setClassScope(n.f1.f0.tokenImage);
 
-        print("");
         n.f6.accept(this);
 
         table.clearClassScope();
@@ -144,6 +142,8 @@ public class J2V extends DepthFirstVisitor {
         n.f10.accept(this);
         print("ret %s", lastExpression);
         indent--;
+
+        print("");
 
         table.clearMethodScope();
     }
