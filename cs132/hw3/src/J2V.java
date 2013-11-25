@@ -176,13 +176,7 @@ public class J2V extends DepthFirstVisitor {
         String t1 = String.format("t.%d", varCount++);
         print("%s = %s", t1, lastExpression);
 
-        int nullCount = this.nullCount++;
-        print("if %s goto :null%d", t1, nullCount);
-        indent++;
-        print("Error(\"null pointer\")");
-        indent--;
-
-        print("null%d:", nullCount);
+        printNullPointerCheck(t1);
 
         String t2 = String.format("t.%d", this.varCount++);
         print("%s = [%s]", t2, t1);
