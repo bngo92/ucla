@@ -284,6 +284,11 @@ public class J2V extends DepthFirstVisitor {
     public void visit(AndExpression n) {
         localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
+        if (lastExpression.contains("+")) {
+            String var = newVar();
+            print("%s = %s", var, lastExpression);
+            lastExpression = var;
+        }
 
         if (ifNotWhile) {
             print("if %s goto :if%d_else", lastExpression, ifCount - 1);
