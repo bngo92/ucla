@@ -1,6 +1,8 @@
 import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -31,12 +33,15 @@ public class J2V extends DepthFirstVisitor {
 
     public static void main(String[] args) {
         try {
-            Node root = new MiniJavaParser(System.in).Goal();
+            //Node root = new MiniJavaParser(System.in).Goal();
+            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/TreeVisitor.java")).Goal();
             MySymbolTable table = new MySymbolTable();
             root.accept(table);
             root.accept(new J2V(table));
         } catch (ParseException e) {
             System.out.println(e.toString());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
 
@@ -397,12 +402,12 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(MessageSend n) {
-        reference = true;
-        local = true;
         n.f0.accept(this);
         String objClass = this.objClass;
         if (objClass.equals("this"))
             objClass = table.classScope.name;
+        else
+            printNullPointerCheck(lastExpression);
         String callInstance = lastExpression;
         lastExpression = "";
         reference = false;
