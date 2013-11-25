@@ -182,7 +182,13 @@ public class J2V extends DepthFirstVisitor {
 
         localExpressionStack.push(false);
         n.f2.accept(this);
-        print("%s = %s", lhs, lastExpression);
+        if (lhs.contains("+")) {
+            String var = newVar();
+            print("%s = %s", var, lastExpression);
+            print("%s = %s", lhs, var);
+        } else {
+            print("%s = %s", lhs, lastExpression);
+        }
     }
 
     @Override
@@ -400,6 +406,8 @@ public class J2V extends DepthFirstVisitor {
         }
 
         if (!callInstance.equals("this") && !callInstance.contains(":empty_"))
+            printNullPointerCheck(callInstance);
+        else if (callInstance.contains("+"))
             printNullPointerCheck(callInstance);
 
         lastExpression = "";
