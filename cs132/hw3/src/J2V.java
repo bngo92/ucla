@@ -271,7 +271,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(PrintStatement n) {
         n.f2.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
         print("PrintIntS(%s)", lastExpression);
     }
@@ -523,7 +523,7 @@ public class J2V extends DepthFirstVisitor {
         lastExpression = var;
 
         address = false;
-        complex = true;
+        complex = false;
     }
 
     @Override
