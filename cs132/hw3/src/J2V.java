@@ -142,7 +142,7 @@ public class J2V extends DepthFirstVisitor {
 
         indent++;
         n.f8.accept(this);
-        localExpressionStack.push(true);
+        localPrimaryExpressionStack.push(true);
         lastExpression = "";
         n.f10.accept(this);
         print("ret %s", lastExpression);
