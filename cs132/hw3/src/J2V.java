@@ -220,6 +220,7 @@ public class J2V extends DepthFirstVisitor {
         local = true;
         ifNotWhile = true;
 
+        localExpressionStack.push(true);
         n.f2.accept(this);
         ifNotWhile = false;
         if (not)
