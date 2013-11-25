@@ -319,14 +319,12 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(CompareExpression n) {
-        Boolean savedEval = eval;
-        eval = true;
+        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
         String lhs = lastExpression;
 
-        eval = true;
+        localPrimaryExpressionStack.push(true);
         n.f2.accept(this);
-        eval = savedEval;
         String rhs = lastExpression;
         lastExpression = String.format("LtS(%s %s)", lhs, rhs);
         not = false;
@@ -334,42 +332,36 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(PlusExpression n) {
-        Boolean savedEval = eval;
-        eval = true;
+        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
         String op1 = lastExpression;
 
-        eval = true;
+        localPrimaryExpressionStack.push(true);
         n.f2.accept(this);
-        eval = savedEval;
         String op2 = lastExpression;
         lastExpression = String.format("Add(%s %s)", op1, op2);
     }
 
     @Override
     public void visit(MinusExpression n) {
-        Boolean savedEval = eval;
-        eval = true;
+        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
         String op1 = lastExpression;
 
-        eval = true;
+        localPrimaryExpressionStack.push(true);
         n.f2.accept(this);
-        eval = savedEval;
         String op2 = lastExpression;
         lastExpression = String.format("Sub(%s %s)", op1, op2);
     }
 
     @Override
     public void visit(TimesExpression n) {
-        Boolean savedEval = eval;
-        eval = true;
+        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
         String op1 = lastExpression;
 
-        eval = true;
+        localPrimaryExpressionStack.push(true);
         n.f2.accept(this);
-        eval = savedEval;
         String op2 = lastExpression;
         lastExpression = String.format("MulS(%s %s)", op1, op2);
     }
