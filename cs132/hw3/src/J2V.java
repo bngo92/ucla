@@ -491,6 +491,8 @@ public class J2V extends DepthFirstVisitor {
         if (offset != null) {
             lastExpression = String.format("[%s+%d]", objClass, offset);
             address = true;
+        } else {
+            address = false;
         }
 
         MyType type = table.getVarType(identifier);
@@ -501,9 +503,6 @@ public class J2V extends DepthFirstVisitor {
         }
 
         complex = false;
-        System.out.println(lastExpression);
-        System.out.println(address);
-        System.out.println(complex);
     }
 
     @Override
