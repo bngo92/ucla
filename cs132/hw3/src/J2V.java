@@ -58,6 +58,7 @@ public class J2V extends DepthFirstVisitor {
     }
 
     private void printArrayAlloc() {
+        print("");
         print("func AllocArray(size)");
         indent++;
         print("bytes = MulS(size 4)");
@@ -66,7 +67,6 @@ public class J2V extends DepthFirstVisitor {
         print("[v] = size");
         print("ret v");
         indent--;
-        print("");
     }
 
     @Override
@@ -256,6 +256,11 @@ public class J2V extends DepthFirstVisitor {
         if (not) {
             String var = newVar();
             print("%s = Sub(1 %s)", var, lastExpression);
+            lastExpression = var;
+        }
+        if (lastExpression.contains(" ")) {
+            String var = newVar();
+            print("%s = %s", var, lastExpression);
             lastExpression = var;
         }
         print("if0 %s goto :while%d_end", lastExpression, whileCount);
