@@ -16,7 +16,6 @@ public class J2V extends DepthFirstVisitor {
     private String objClass;
     private boolean allocArray;
     private boolean not;
-    private boolean newAlloc;
     private boolean ifNotWhile;
     private boolean address;
     private boolean complex;
@@ -463,13 +462,9 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(PrimaryExpression n) {
-        newAlloc = false;
         n.f0.accept(this);
-        if (address || complex) {
+        if (address || complex)
             lastExpression = printVar(lastExpression);
-            if (newAlloc)
-                printNullPointerCheck(lastExpression);
-        }
     }
 
     @Override
@@ -549,7 +544,6 @@ public class J2V extends DepthFirstVisitor {
                 print("[%s] = :vmt_%s", var, objClass);
                 lastExpression = var;
             }
-            newAlloc = true;
             complex = true;
         } else {
             lastExpression = String.format(":empty_%s", objClass);
