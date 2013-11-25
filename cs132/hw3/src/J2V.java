@@ -147,6 +147,8 @@ public class J2V extends DepthFirstVisitor {
         n.f8.accept(this);
         lastExpression = "";
         n.f10.accept(this);
+        if (address || complex)
+            lastExpression = printVar(lastExpression);
         print("ret %s", lastExpression);
         indent--;
 
