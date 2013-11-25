@@ -422,9 +422,8 @@ public class J2V extends DepthFirstVisitor {
         String objClass = this.objClass;
         String callInstance = lastExpression;
 
-        if (address || complex) {
+        if (address || complex)
             callInstance = printVar(callInstance);
-        }
 
         if (!callInstance.equals("this") && !callInstance.contains(":empty_"))
             printNullPointerCheck(callInstance);
@@ -548,12 +547,13 @@ public class J2V extends DepthFirstVisitor {
                 lastExpression = var;
             }
             newAlloc = true;
+            complex = true;
         } else {
             lastExpression = String.format(":empty_%s", objClass);
+            complex = false;
         }
 
         address = false;
-        complex = false;
     }
 
     @Override
