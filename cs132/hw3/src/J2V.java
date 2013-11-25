@@ -426,6 +426,11 @@ public class J2V extends DepthFirstVisitor {
             localExpressionStack.push(false);
             localPrimaryExpressionStack.push(true);
             node.accept(this);
+            if (lastExpression.contains("call :")) {
+                String var = newVar();
+                print("%s = %s", var, lastExpression);
+                lastExpression = var;
+            }
             expression += " " + lastExpression;
         }
         lastExpression = expression;
