@@ -436,7 +436,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(PrimaryExpression n) {
         newAlloc = false;
         n.f0.accept(this);
-        if ((local || eval) && (lastExpression.contains("+") || newAlloc)) {
+        if (!localVarStack.isEmpty() && localVarStack.pop()) {
             String var = newVar();
             print("%s = %s", var, lastExpression);
             lastExpression = var;
