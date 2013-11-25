@@ -1,8 +1,6 @@
 import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -33,14 +31,12 @@ public class J2V extends DepthFirstVisitor {
 
     public static void main(String[] args) {
         try {
-            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/TreeVisitor.java")).Goal();
+            Node root = new MiniJavaParser(System.in).Goal();
             MySymbolTable table = new MySymbolTable();
             root.accept(table);
             root.accept(new J2V(table));
         } catch (ParseException e) {
             System.out.println(e.toString());
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
 
