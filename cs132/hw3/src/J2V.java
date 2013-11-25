@@ -427,13 +427,13 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(ExpressionList n) {
         n.f0.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
 
         String expression = " " + lastExpression;
         for (Node node : n.f1.nodes) {
             node.accept(this);
-            if (complex)
+            if (address || complex)
                 lastExpression = printVar(lastExpression);
             expression += " " + lastExpression;
         }
