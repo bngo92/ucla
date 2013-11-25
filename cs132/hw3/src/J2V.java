@@ -179,6 +179,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(AssignmentStatement n) {
+        localPrimaryExpressionStack.push(false);
         n.f0.accept(this);
         String lhs = lastExpression;
 
