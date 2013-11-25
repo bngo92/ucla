@@ -408,7 +408,7 @@ public class J2V extends DepthFirstVisitor {
         lastExpression = "";
         reference = false;
 
-        localExpressionStack.push(true);
+        localPrimaryExpressionStack.push(true);
         n.f4.accept(this);
 
         HashMap virtualMethodTable = table.classTable.get(objClass).methodOffsets;
