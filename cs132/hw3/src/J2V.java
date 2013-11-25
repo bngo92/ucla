@@ -1,6 +1,8 @@
 import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -31,12 +33,14 @@ public class J2V extends DepthFirstVisitor {
 
     public static void main(String[] args) {
         try {
-            Node root = new MiniJavaParser(System.in).Goal();
+            Node root = new MiniJavaParser(new FileInputStream("cs132/hw3/TreeVisitor.java")).Goal();
             MySymbolTable table = new MySymbolTable();
             root.accept(table);
             root.accept(new J2V(table));
         } catch (ParseException e) {
             System.out.println(e.toString());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
 
@@ -137,6 +141,8 @@ public class J2V extends DepthFirstVisitor {
     public void visit(MethodDeclaration n) {
         table.setMethodScope(n.f2.f0.tokenImage);
         varCount = 0;
+        localExpressionStack.clear();
+        localPrimaryExpressionStack.clear();
 
         print("func %s(%s)", table.getMethodScope(), table.classScope.getMethodArgsString(n.f2.f0.tokenImage));
 
@@ -171,8 +177,14 @@ public class J2V extends DepthFirstVisitor {
     }
 
     @Override
+    public void visit(Statement n) {
+        localExpressionStack.clear();
+        localPrimaryExpressionStack.clear();
+        n.f0.accept(this);
+    }
+
+    @Override
     public void visit(AssignmentStatement n) {
-        reference = false;
         n.f0.accept(this);
         String lhs = lastExpression;
 
@@ -267,7 +279,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(Expression n) {
         n.f0.accept(this);
-        if (!localExpressionStack.isEmpty() && localExpressionStack.pop()) {
+        if (!localExpressionStack.isEmpty() && localExpressionStack.pop() && n.f0.which != 8) {
             String t = newVar();
             print("%s = %s", t, lastExpression);
             lastExpression = t;
@@ -408,7 +420,6 @@ public class J2V extends DepthFirstVisitor {
         lastExpression = "";
         reference = false;
 
-        localPrimaryExpressionStack.push(true);
         n.f4.accept(this);
 
         HashMap virtualMethodTable = table.classTable.get(objClass).methodOffsets;
@@ -424,9 +435,13 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(ExpressionList n) {
+        localExpressionStack.push(false);
+        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
         String expression = " " + lastExpression;
         for (Node node : n.f1.nodes) {
+            localExpressionStack.push(false);
+            localPrimaryExpressionStack.push(true);
             node.accept(this);
             expression += " " + lastExpression;
         }
@@ -437,7 +452,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(PrimaryExpression n) {
         newAlloc = false;
         n.f0.accept(this);
-        if (!localPrimaryExpressionStack.isEmpty() && localPrimaryExpressionStack.pop()) {
+        if (!localPrimaryExpressionStack.isEmpty() && localPrimaryExpressionStack.pop() && n.f0.which > 3) {
             String var = newVar();
             print("%s = %s", var, lastExpression);
             lastExpression = var;
