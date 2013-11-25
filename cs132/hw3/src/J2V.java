@@ -401,7 +401,7 @@ public class J2V extends DepthFirstVisitor {
         String objClass = this.objClass;
         String callInstance = lastExpression;
 
-        if (callInstance.contains("call :") || callInstance.contains("+")) {
+        if (callInstance.contains("call :") || callInstance.contains("+") || callInstance.contains("HeapAllocZ(")) {
             String var = newVar();
             print("%s = %s", var, callInstance);
             callInstance = var;
