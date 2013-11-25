@@ -477,10 +477,8 @@ public class J2V extends DepthFirstVisitor {
 
         MyType type = table.getVarType(identifier);
         if (type != null) {
-            if (offset != null) {
-                lastExpression = newVar();
-                print("%s = [%s+%d]", lastExpression, objClass, offset);
-            }
+            if (offset != null)
+                lastExpression = String.format("[%s+%d]", objClass, offset);
             objClass = type.name;
         }
     }
