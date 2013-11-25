@@ -370,6 +370,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(ArrayLookup n) {
+        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
         String t1 = lastExpression;
         printNullPointerCheck(t1);
