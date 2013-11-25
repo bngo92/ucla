@@ -14,13 +14,10 @@ public class J2V extends DepthFirstVisitor {
     private int whileCount = 1;
     private int ssCount = 1;
     private String lastExpression;
-    private boolean reference;
     private boolean allocArray;
-    private boolean local;
     private String objClass;
     private boolean not;
     private boolean newAlloc;
-    private boolean eval;
     private boolean ifNotWhile;
     private LinkedList<Boolean> localExpressionStack = new LinkedList<Boolean>();
     private LinkedList<Boolean> localPrimaryExpressionStack = new LinkedList<Boolean>();
@@ -216,9 +213,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(IfStatement n) {
         int ifCount = this.ifCount++;
-        reference = true;
         not = false;
-        local = true;
         ifNotWhile = true;
 
         localExpressionStack.push(true);
@@ -366,7 +361,6 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(ArrayLookup n) {
-        local = true;
         n.f0.accept(this);
         String t1 = lastExpression;
         printNullPointerCheck(t1);
@@ -398,9 +392,7 @@ public class J2V extends DepthFirstVisitor {
         String objClass = this.objClass;
         String callInstance = lastExpression;
 
-        if (objClass.equals("this"))
-            objClass = table.classScope.name;
-        else if (!callInstance.contains(":empty_"))
+        if (!objClass.equals(table.classScope.name) && !table.classTable.get(objClass).methodOffsets.isEmpty())
             printNullPointerCheck(lastExpression);
 
         lastExpression = "";
