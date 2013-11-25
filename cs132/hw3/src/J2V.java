@@ -4,8 +4,27 @@ import visitor.DepthFirstVisitor;
 import java.util.HashMap;
 
 public class J2V extends DepthFirstVisitor {
+    private final MySymbolTable table;
+    private int indent;
+    private int varCount;
+    private int boundCount = 1;
+    private int ifCount = 1;
+    private int nullCount = 1;
+    private int whileCount = 1;
+    private int ssCount = 1;
+    private String lastExpression;
+    private boolean reference;
+    private boolean allocArray;
+    private boolean local;
+    private String objClass;
+    private boolean not;
+    private boolean newAlloc;
     private boolean eval;
     private boolean ifNotWhile;
+
+    private J2V(MySymbolTable table) {
+        this.table = table;
+    }
 
     public static void main(String[] args) {
         try {
@@ -18,29 +37,7 @@ public class J2V extends DepthFirstVisitor {
         }
     }
 
-    J2V(MySymbolTable table) {
-        this.table = table;
-    }
-
-    MySymbolTable table;
-
-    int indent;
-    int varCount;
-    int boundCount = 1;
-    int ifCount = 1;
-    int nullCount = 1;
-    int whileCount = 1;
-    int ssCount = 1;
-
-    String lastExpression;
-    boolean reference;
-    boolean allocArray;
-    boolean local;
-    String objClass;
-    boolean not;
-    boolean newAlloc;
-
-    public void print(String s, Object... arg) {
+    void print(String s, Object... arg) {
         StringBuilder ret = new StringBuilder();
         for (int i = 0; i < indent * 2; i++)
             ret.append(' ');
