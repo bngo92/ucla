@@ -22,7 +22,7 @@ public class J2V extends DepthFirstVisitor {
     private boolean newAlloc;
     private boolean eval;
     private boolean ifNotWhile;
-    private LinkedList<Boolean> localVarStack;
+    private LinkedList<Boolean> localVarStack = new LinkedList<Boolean>();
 
     private J2V(MySymbolTable table) {
         this.table = table;
