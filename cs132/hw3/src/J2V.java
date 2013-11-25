@@ -191,8 +191,7 @@ public class J2V extends DepthFirstVisitor {
         print("%s = MulS(%s 4)", t2, lastExpression);
         print("%s = Add(%s %s)", t2, t2, t1);
         n.f5.accept(this);
-        if (address)
-            lastExpression = printVar(lastExpression);
+        lastExpression = printVar(lastExpression);
         print("[%s+4] = %s", t2, lastExpression);
     }
 
