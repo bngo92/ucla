@@ -145,8 +145,6 @@ public class J2V extends DepthFirstVisitor {
         print("ret %s", lastExpression);
         indent--;
 
-        print("");
-
         table.clearMethodScope();
     }
 
