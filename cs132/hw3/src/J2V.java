@@ -41,6 +41,9 @@ public class J2V extends DepthFirstVisitor {
     }
 
     String printVar(String var) {
+        address = false;
+        complex = false;
+
         String _var = newVar();
         print("%s = %s", _var, var);
         return _var;
