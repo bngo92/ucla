@@ -230,7 +230,6 @@ public class J2V extends DepthFirstVisitor {
             print("if0 %s goto :if%d_else", lastExpression, ifCount);
 
         indent++;
-        localExpressionStack.push(true);
         n.f4.accept(this);
         print("goto :if%d_end", ifCount);
         indent--;
@@ -247,7 +246,6 @@ public class J2V extends DepthFirstVisitor {
     public void visit(WhileStatement n) {
         int whileCount = this.whileCount++;
         print("while%d_top:", whileCount);
-        local = true;
 
         not = false;
         n.f2.accept(this);
@@ -285,23 +283,19 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(AndExpression n) {
-        Boolean savedEval = eval;
-        eval = true;
-        not = false;
+        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
 
         if (ifNotWhile) {
             print("if %s goto :if%d_else", lastExpression, ifCount - 1);
-            eval = true;
+            localPrimaryExpressionStack.push(true);
             n.f2.accept(this);
-            eval = savedEval;
         } else {
             int ss = ssCount++;
             print("if %s goto :ss%d_else", lastExpression, ss);
 
-            eval = true;
+            localPrimaryExpressionStack.push(true);
             n.f2.accept(this);
-            eval = savedEval;
 
             String var = newVar();
             indent++;
