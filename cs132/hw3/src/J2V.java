@@ -2,7 +2,6 @@ import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 
 public class J2V extends DepthFirstVisitor {
     private final MySymbolTable table;
@@ -14,13 +13,13 @@ public class J2V extends DepthFirstVisitor {
     private int whileCount = 1;
     private int ssCount = 1;
     private String lastExpression;
-    private boolean allocArray;
     private String objClass;
+    private boolean allocArray;
     private boolean not;
     private boolean newAlloc;
     private boolean ifNotWhile;
-    private LinkedList<Boolean> localExpressionStack = new LinkedList<Boolean>();
-    private LinkedList<Boolean> localPrimaryExpressionStack = new LinkedList<Boolean>();
+    private boolean address;
+    private boolean complex;
 
     private J2V(MySymbolTable table) {
         this.table = table;
@@ -39,6 +38,12 @@ public class J2V extends DepthFirstVisitor {
 
     String newVar() {
         return String.format("t.%d", varCount++);
+    }
+
+    String printVar(String var) {
+        String _var = newVar();
+        print("%s = %s", _var, var);
+        return _var;
     }
 
     void print(String s, Object... arg) {
@@ -138,7 +143,6 @@ public class J2V extends DepthFirstVisitor {
 
         indent++;
         n.f8.accept(this);
-        localPrimaryExpressionStack.push(true);
         lastExpression = "";
         n.f10.accept(this);
         print("ret %s", lastExpression);
@@ -166,22 +170,18 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(Statement n) {
-        localExpressionStack.clear();
-        localPrimaryExpressionStack.clear();
         n.f0.accept(this);
     }
 
     @Override
     public void visit(AssignmentStatement n) {
-        localPrimaryExpressionStack.push(false);
         n.f0.accept(this);
         String lhs = lastExpression;
+        Boolean lhsAddress = address;
 
-        localExpressionStack.push(false);
         n.f2.accept(this);
-        if (lhs.contains("+") && (lastExpression.contains("call :") || lastExpression.contains("+"))) {
-            String var = newVar();
-            print("%s = %s", var, lastExpression);
+        if (lhsAddress && (address || complex)) {
+            String var = printVar(lastExpression);
             print("%s = %s", lhs, var);
         } else {
             print("%s = %s", lhs, lastExpression);
@@ -191,8 +191,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(ArrayAssignmentStatement n) {
         n.f0.accept(this);
-        String t1 = newVar();
-        print("%s = %s", t1, lastExpression);
+        String t1 = printVar(lastExpression);
         printNullPointerCheck(t1);
 
         String t2 = newVar();
@@ -209,8 +208,9 @@ public class J2V extends DepthFirstVisitor {
 
         print("%s = MulS(%s 4)", t2, lastExpression);
         print("%s = Add(%s %s)", t2, t2, t1);
-        localPrimaryExpressionStack.push(true);
         n.f5.accept(this);
+        if (address)
+            lastExpression = printVar(lastExpression);
         print("[%s+4] = %s", t2, lastExpression);
     }
 
@@ -220,9 +220,8 @@ public class J2V extends DepthFirstVisitor {
         not = false;
         ifNotWhile = true;
 
-        localExpressionStack.push(true);
         n.f2.accept(this);
-        if (lastExpression.contains("+")) {
+        if (address || complex) {
             String var = newVar();
             print("%s = %s", var, lastExpression);
             lastExpression = var;
@@ -252,18 +251,14 @@ public class J2V extends DepthFirstVisitor {
         print("while%d_top:", whileCount);
 
         not = false;
-        localExpressionStack.push(true);
         n.f2.accept(this);
         if (not) {
             String var = newVar();
             print("%s = Sub(1 %s)", var, lastExpression);
             lastExpression = var;
         }
-        if (lastExpression.contains(" ")) {
-            String var = newVar();
-            print("%s = %s", var, lastExpression);
-            lastExpression = var;
-        }
+        if (complex)
+            lastExpression = printVar(lastExpression);
         print("if0 %s goto :while%d_end", lastExpression, whileCount);
 
         indent++;
@@ -276,37 +271,27 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(PrintStatement n) {
-        localExpressionStack.push(true);
         n.f2.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         print("PrintIntS(%s)", lastExpression);
     }
 
     @Override
-    public void visit(Expression n) {
-        n.f0.accept(this);
-        if (!localExpressionStack.isEmpty() && localExpressionStack.pop() && n.f0.which != 8) {
-            String t = newVar();
-            print("%s = %s", t, lastExpression);
-            lastExpression = t;
-        }
-    }
-
-    @Override
     public void visit(AndExpression n) {
-        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
 
         if (ifNotWhile) {
             print("if %s goto :if%d_else", lastExpression, ifCount - 1);
-            localPrimaryExpressionStack.push(true);
-            localPrimaryExpressionStack.push(true);
             n.f2.accept(this);
         } else {
             int ss = ssCount++;
             print("if %s goto :ss%d_else", lastExpression, ss);
 
-            localPrimaryExpressionStack.push(true);
             n.f2.accept(this);
+            lastExpression = printVar(lastExpression);
 
             String var = newVar();
             indent++;
@@ -323,67 +308,93 @@ public class J2V extends DepthFirstVisitor {
             print("ss%d_end:", ss);
             not = false;
         }
+
+        address = false;
+        complex = true;
     }
 
     @Override
     public void visit(CompareExpression n) {
-        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         String lhs = lastExpression;
 
-        localPrimaryExpressionStack.push(true);
         n.f2.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         String rhs = lastExpression;
         lastExpression = String.format("LtS(%s %s)", lhs, rhs);
         not = false;
+
+        address = false;
+        complex = true;
     }
 
     @Override
     public void visit(PlusExpression n) {
-        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         String op1 = lastExpression;
 
-        localPrimaryExpressionStack.push(true);
         n.f2.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         String op2 = lastExpression;
         lastExpression = String.format("Add(%s %s)", op1, op2);
+
+        address = false;
+        complex = true;
     }
 
     @Override
     public void visit(MinusExpression n) {
-        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         String op1 = lastExpression;
 
-        localPrimaryExpressionStack.push(true);
         n.f2.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         String op2 = lastExpression;
         lastExpression = String.format("Sub(%s %s)", op1, op2);
+
+        address = false;
+        complex = true;
     }
 
     @Override
     public void visit(TimesExpression n) {
-        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         String op1 = lastExpression;
 
-        localPrimaryExpressionStack.push(true);
         n.f2.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         String op2 = lastExpression;
         lastExpression = String.format("MulS(%s %s)", op1, op2);
+
+        address = false;
+        complex = true;
     }
 
     @Override
     public void visit(ArrayLookup n) {
-        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         String t1 = lastExpression;
         printNullPointerCheck(t1);
 
         String t2 = newVar();
         print("%s = [%s]", t2, t1);
         n.f2.accept(this);
+        if (complex)
+            lastExpression = printVar(lastExpression);
         print("%s = Lt(%s %s)", t2, lastExpression, t2);
 
         int boundCount = this.boundCount++;
@@ -396,6 +407,9 @@ public class J2V extends DepthFirstVisitor {
         print("%s = MulS(%s 4)", t2, lastExpression);
         print("%s = Add(%s %s)", t2, t2, t1);
         lastExpression = String.format("[%s+4]", t2);
+
+        address = true;
+        complex = false;
     }
 
     @Override
@@ -408,10 +422,8 @@ public class J2V extends DepthFirstVisitor {
         String objClass = this.objClass;
         String callInstance = lastExpression;
 
-        if (callInstance.contains("call :") || callInstance.contains("+") || callInstance.contains("HeapAllocZ(")) {
-            String var = newVar();
-            print("%s = %s", var, callInstance);
-            callInstance = var;
+        if (address || complex) {
+            callInstance = printVar(callInstance);
         }
 
         if (!callInstance.equals("this") && !callInstance.contains(":empty_"))
@@ -433,24 +445,15 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(ExpressionList n) {
-        localExpressionStack.push(false);
-        localPrimaryExpressionStack.push(true);
         n.f0.accept(this);
-        if (lastExpression.contains(" ")) {
-            String var = newVar();
-            print("%s = %s", var, lastExpression);
-            lastExpression = var;
-        }
+        if (complex)
+            lastExpression = printVar(lastExpression);
+
         String expression = " " + lastExpression;
         for (Node node : n.f1.nodes) {
-            localExpressionStack.push(false);
-            localPrimaryExpressionStack.push(true);
             node.accept(this);
-            if (lastExpression.contains(" ")) {
-                String var = newVar();
-                print("%s = %s", var, lastExpression);
-                lastExpression = var;
-            }
+            if (complex)
+                lastExpression = printVar(lastExpression);
             expression += " " + lastExpression;
         }
         lastExpression = expression;
@@ -460,11 +463,8 @@ public class J2V extends DepthFirstVisitor {
     public void visit(PrimaryExpression n) {
         newAlloc = false;
         n.f0.accept(this);
-        if (!localPrimaryExpressionStack.isEmpty() && localPrimaryExpressionStack.pop() &&
-                ((n.f0.which == 3 && lastExpression.contains("+")) || n.f0.which > 4)) {
-            String var = newVar();
-            print("%s = %s", var, lastExpression);
-            lastExpression = var;
+        if (address || complex) {
+            lastExpression = printVar(lastExpression);
             if (newAlloc)
                 printNullPointerCheck(lastExpression);
         }
@@ -473,16 +473,22 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(IntegerLiteral n) {
         lastExpression = n.f0.tokenImage;
+        address = false;
+        complex = false;
     }
 
     @Override
     public void visit(TrueLiteral n) {
         lastExpression = "1";
+        address = false;
+        complex = false;
     }
 
     @Override
     public void visit(FalseLiteral n) {
         lastExpression = "0";
+        address = false;
+        complex = false;
     }
 
     @Override
@@ -492,8 +498,10 @@ public class J2V extends DepthFirstVisitor {
         lastExpression = identifier;
 
         Integer offset = table.classScope.varOffsets.get(identifier);
-        if (offset != null)
+        if (offset != null) {
             lastExpression = String.format("[%s+%d]", objClass, offset);
+            address = true;
+        }
 
         MyType type = table.getVarType(identifier);
         if (type != null) {
@@ -501,12 +509,17 @@ public class J2V extends DepthFirstVisitor {
                 lastExpression = String.format("[%s+%d]", objClass, offset);
             objClass = type.name;
         }
+
+        complex = false;
     }
 
     @Override
     public void visit(ThisExpression n) {
         lastExpression = "this";
         objClass = table.classScope.name;
+
+        address = false;
+        complex = false;
     }
 
     @Override
@@ -516,6 +529,9 @@ public class J2V extends DepthFirstVisitor {
         String var = newVar();
         print("%s = call :AllocArray(%s)", var, lastExpression);
         lastExpression = var;
+
+        address = false;
+        complex = true;
     }
 
     @Override
@@ -535,6 +551,9 @@ public class J2V extends DepthFirstVisitor {
         } else {
             lastExpression = String.format(":empty_%s", objClass);
         }
+
+        address = false;
+        complex = false;
     }
 
     @Override
