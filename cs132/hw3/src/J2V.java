@@ -446,7 +446,8 @@ public class J2V extends DepthFirstVisitor {
     public void visit(PrimaryExpression n) {
         newAlloc = false;
         n.f0.accept(this);
-        if (!localPrimaryExpressionStack.isEmpty() && localPrimaryExpressionStack.pop() && n.f0.which > 3) {
+        if (!localPrimaryExpressionStack.isEmpty() && localPrimaryExpressionStack.pop() &&
+                ((n.f0.which == 3 && lastExpression.contains("+")) || n.f0.which > 4)) {
             String var = newVar();
             print("%s = %s", var, lastExpression);
             lastExpression = var;
