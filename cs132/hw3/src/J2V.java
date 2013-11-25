@@ -230,6 +230,7 @@ public class J2V extends DepthFirstVisitor {
             print("if0 %s goto :if%d_else", lastExpression, ifCount);
 
         indent++;
+        localExpressionStack.push(true);
         n.f4.accept(this);
         print("goto :if%d_end", ifCount);
         indent--;
