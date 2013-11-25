@@ -22,7 +22,8 @@ public class J2V extends DepthFirstVisitor {
     private boolean newAlloc;
     private boolean eval;
     private boolean ifNotWhile;
-    private LinkedList<Boolean> localVarStack = new LinkedList<Boolean>();
+    private LinkedList<Boolean> localExpressionStack = new LinkedList<Boolean>();
+    private LinkedList<Boolean> localPrimaryExpressionStack = new LinkedList<Boolean>();
 
     private J2V(MySymbolTable table) {
         this.table = table;
@@ -175,7 +176,7 @@ public class J2V extends DepthFirstVisitor {
         n.f0.accept(this);
         String lhs = lastExpression;
 
-        localVarStack.push(false);
+        localExpressionStack.push(false);
         n.f2.accept(this);
         print("%s = %s", lhs, lastExpression);
     }
@@ -258,7 +259,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(PrintStatement n) {
-        localVarStack.push(true);
+        localExpressionStack.push(true);
         n.f2.accept(this);
         print("PrintIntS(%s)", lastExpression);
     }
@@ -266,7 +267,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(Expression n) {
         n.f0.accept(this);
-        if (!localVarStack.isEmpty() && localVarStack.pop()) {
+        if (!localExpressionStack.isEmpty() && localExpressionStack.pop()) {
             String t = newVar();
             print("%s = %s", t, lastExpression);
             lastExpression = t;
@@ -407,7 +408,7 @@ public class J2V extends DepthFirstVisitor {
         lastExpression = "";
         reference = false;
 
-        localVarStack.push(true);
+        localExpressionStack.push(true);
         n.f4.accept(this);
 
         HashMap virtualMethodTable = table.classTable.get(objClass).methodOffsets;
@@ -436,7 +437,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(PrimaryExpression n) {
         newAlloc = false;
         n.f0.accept(this);
-        if (!localVarStack.isEmpty() && localVarStack.pop()) {
+        if (!localPrimaryExpressionStack.isEmpty() && localPrimaryExpressionStack.pop()) {
             String var = newVar();
             print("%s = %s", var, lastExpression);
             lastExpression = var;
