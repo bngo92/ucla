@@ -392,6 +392,15 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(ArrayLength n) {
+        n.f0.accept(this);
+        if (address || complex)
+            lastExpression = printVar(lastExpression);
+        String t1 = lastExpression;
+        printNullPointerCheck(t1);
+
+        String t2 = newVar();
+        print("%s = [%s]", t2, t1);
+        lastExpression = t2;
     }
 
     @Override
