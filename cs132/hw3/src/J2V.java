@@ -93,9 +93,7 @@ public class J2V extends DepthFirstVisitor {
 
         print("");
         n.f0.accept(this);
-        print("");
         n.f1.accept(this);
-        print("");
 
         if (allocArray)
             printArrayAlloc();
@@ -116,6 +114,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(ClassDeclaration n) {
         table.setClassScope(n.f1.f0.tokenImage);
 
+        print("");
         n.f4.accept(this);
 
         table.clearClassScope();
@@ -125,6 +124,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(ClassExtendsDeclaration n) {
         table.setClassScope(n.f1.f0.tokenImage);
 
+        print("");
         n.f6.accept(this);
 
         table.clearClassScope();
@@ -182,7 +182,7 @@ public class J2V extends DepthFirstVisitor {
 
         localExpressionStack.push(false);
         n.f2.accept(this);
-        if (lhs.contains("+")) {
+        if (lhs.contains("+") && lastExpression.contains("call :")) {
             String var = newVar();
             print("%s = %s", var, lastExpression);
             print("%s = %s", lhs, var);
