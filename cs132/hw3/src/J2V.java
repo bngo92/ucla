@@ -352,8 +352,6 @@ public class J2V extends DepthFirstVisitor {
         n.f0.accept(this);
         if (address || complex)
             lastExpression = printVar(lastExpression);
-        System.out.println(address);
-        System.out.println(complex);
         String op1 = lastExpression;
 
         n.f2.accept(this);
@@ -503,6 +501,9 @@ public class J2V extends DepthFirstVisitor {
         }
 
         complex = false;
+        System.out.println(lastExpression);
+        System.out.println(address);
+        System.out.println(complex);
     }
 
     @Override
