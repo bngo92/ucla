@@ -2,6 +2,7 @@ import syntaxtree.*;
 import visitor.DepthFirstVisitor;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 
 public class J2V extends DepthFirstVisitor {
     private final MySymbolTable table;
@@ -21,6 +22,7 @@ public class J2V extends DepthFirstVisitor {
     private boolean newAlloc;
     private boolean eval;
     private boolean ifNotWhile;
+    private LinkedList<Boolean> localVarStack;
 
     private J2V(MySymbolTable table) {
         this.table = table;
@@ -72,7 +74,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(Goal n) {
         print("");
-        Boolean skip = true;
+        Boolean skip = true; // skip main class
         for (MyType type : table.classTable.values()) {
             if (type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
                 if (!skip) {
@@ -173,9 +175,8 @@ public class J2V extends DepthFirstVisitor {
         n.f0.accept(this);
         String lhs = lastExpression;
 
-        local = false;
+        localVarStack.push(false);
         n.f2.accept(this);
-        local = true;
         print("%s = %s", lhs, lastExpression);
     }
 
@@ -257,7 +258,7 @@ public class J2V extends DepthFirstVisitor {
 
     @Override
     public void visit(PrintStatement n) {
-        local = true;
+        localVarStack.push(true);
         n.f2.accept(this);
         print("PrintIntS(%s)", lastExpression);
     }
@@ -265,7 +266,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(Expression n) {
         n.f0.accept(this);
-        if ((local || eval) && (lastExpression.contains(" ") || lastExpression.contains("+"))) {
+        if (!localVarStack.isEmpty() && localVarStack.pop()) {
             String t = newVar();
             print("%s = %s", t, lastExpression);
             lastExpression = t;
@@ -406,10 +407,8 @@ public class J2V extends DepthFirstVisitor {
         lastExpression = "";
         reference = false;
 
-        Boolean savedEval = eval;
-        eval = true;
+        localVarStack.push(true);
         n.f4.accept(this);
-        eval = savedEval;
 
         HashMap virtualMethodTable = table.classTable.get(objClass).methodOffsets;
         if (virtualMethodTable.isEmpty() || !virtualMethodTable.containsKey(n.f2.f0.tokenImage)) {
