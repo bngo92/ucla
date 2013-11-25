@@ -461,13 +461,6 @@ public class J2V extends DepthFirstVisitor {
     }
 
     @Override
-    public void visit(PrimaryExpression n) {
-        n.f0.accept(this);
-        if (address || complex)
-            lastExpression = printVar(lastExpression);
-    }
-
-    @Override
     public void visit(IntegerLiteral n) {
         lastExpression = n.f0.tokenImage;
         address = false;
