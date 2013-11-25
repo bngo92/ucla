@@ -137,14 +137,12 @@ public class J2V extends DepthFirstVisitor {
     public void visit(MethodDeclaration n) {
         table.setMethodScope(n.f2.f0.tokenImage);
         varCount = 0;
-        localExpressionStack.clear();
-        localPrimaryExpressionStack.clear();
 
         print("func %s(%s)", table.getMethodScope(), table.classScope.getMethodArgsString(n.f2.f0.tokenImage));
 
         indent++;
         n.f8.accept(this);
-        reference = false;
+        localExpressionStack.push(true);
         lastExpression = "";
         n.f10.accept(this);
         print("ret %s", lastExpression);
