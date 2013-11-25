@@ -476,12 +476,9 @@ public class J2V extends DepthFirstVisitor {
 
         MyType type = table.getVarType(identifier);
         if (type != null) {
-            if (reference && type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
-                if (offset != null) {
-                    lastExpression = newVar();
-                    print("%s = [%s+%d]", lastExpression, objClass, offset);
-                }
-                printNullPointerCheck(lastExpression);
+            if (offset != null) {
+                lastExpression = newVar();
+                print("%s = [%s+%d]", lastExpression, objClass, offset);
             }
             objClass = type.name;
         }
