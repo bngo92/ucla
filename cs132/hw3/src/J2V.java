@@ -392,10 +392,8 @@ public class J2V extends DepthFirstVisitor {
         String objClass = this.objClass;
         String callInstance = lastExpression;
 
-        if (!callInstance.contains(":empty_"))
-            printNullPointerCheck(lastExpression);
-        else if (!callInstance.equals("this"))
-            printNullPointerCheck(lastExpression);
+        if (!callInstance.equals("this") && !callInstance.contains(":empty_"))
+                printNullPointerCheck(lastExpression);
 
         lastExpression = "";
         n.f4.accept(this);
