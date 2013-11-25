@@ -223,9 +223,9 @@ public class J2V extends DepthFirstVisitor {
         ifNotWhile = true;
 
         n.f2.accept(this);
+        ifNotWhile = false;
         if (address || complex)
             lastExpression = printVar(lastExpression);
-        ifNotWhile = false;
         if (not)
             print("if %s goto :if%d_else", lastExpression, ifCount);
         else
@@ -384,7 +384,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(ArrayLookup n) {
         n.f0.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
         String t1 = lastExpression;
         printNullPointerCheck(t1);
@@ -392,7 +392,7 @@ public class J2V extends DepthFirstVisitor {
         String t2 = newVar();
         print("%s = [%s]", t2, t1);
         n.f2.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
         print("%s = Lt(%s %s)", t2, lastExpression, t2);
 
