@@ -133,6 +133,7 @@ public class J2V extends DepthFirstVisitor {
         table.setMethodScope(n.f2.f0.tokenImage);
         varCount = 0;
 
+        print("");
         print("func %s(%s)", table.getMethodScope(), table.classScope.getMethodArgsString(n.f2.f0.tokenImage));
 
         indent++;
@@ -142,8 +143,6 @@ public class J2V extends DepthFirstVisitor {
         n.f10.accept(this);
         print("ret %s", lastExpression);
         indent--;
-
-        print("");
 
         table.clearMethodScope();
     }
