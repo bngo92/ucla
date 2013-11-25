@@ -44,7 +44,7 @@ public class J2V extends DepthFirstVisitor {
         System.out.println(String.format(ret + s, arg));
     }
 
-    private void printNullPointer(String var) {
+    private void printNullPointerCheck(String var) {
         int nullCount = this.nullCount++;
         print("if %s goto :%d", var, nullCount);
         indent++;
@@ -368,12 +368,7 @@ public class J2V extends DepthFirstVisitor {
         local = true;
         n.f0.accept(this);
         String t1 = lastExpression;
-        int nullCount = this.nullCount++;
-        print("if %s goto :null%d", t1, nullCount);
-        indent++;
-        print("Error(\"null pointer\")");
-        indent--;
-        print("null%d:", nullCount);
+        printNullPointerCheck(t1);
 
         String t2 = String.format("t.%d", varCount++);
         print("%s = [%s]", t2, t1);
@@ -442,13 +437,8 @@ public class J2V extends DepthFirstVisitor {
         if ((local || eval) && (lastExpression.contains("+") || newAlloc)) {
             print("t.%d = %s", varCount, lastExpression);
             lastExpression = String.format("t.%d", varCount++);
-            if (newAlloc) {
-                print("if %s goto :null%d", lastExpression, varCount, nullCount);
-                indent++;
-                print("Error(\"null pointer\")");
-                indent--;
-                print("null%d:", nullCount++);
-            }
+            if (newAlloc)
+                printNullPointerCheck(lastExpression);
         }
     }
 
@@ -481,13 +471,8 @@ public class J2V extends DepthFirstVisitor {
 
         MyType type = table.getVarType(identifier);
         if (type != null) {
-            if (reference && type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
-                print("if %s goto :null%d", lastExpression, nullCount);
-                indent++;
-                print("Error(\"null pointer\")");
-                indent--;
-                print("null%d:", nullCount++);
-            }
+            if (reference && type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER)
+                printNullPointerCheck(lastExpression);
             objClass = type.name;
         }
     }
