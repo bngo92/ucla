@@ -289,6 +289,7 @@ public class J2V extends DepthFirstVisitor {
         if (ifNotWhile) {
             print("if %s goto :if%d_else", lastExpression, ifCount - 1);
             localPrimaryExpressionStack.push(true);
+            localPrimaryExpressionStack.push(true);
             n.f2.accept(this);
         } else {
             int ss = ssCount++;
