@@ -399,14 +399,14 @@ public class J2V extends DepthFirstVisitor {
     public void visit(MessageSend n) {
         n.f0.accept(this);
         String objClass = this.objClass;
+        String callInstance = lastExpression;
+
         if (objClass.equals("this"))
             objClass = table.classScope.name;
-        else
+        else if (!callInstance.contains(":empty_"))
             printNullPointerCheck(lastExpression);
-        String callInstance = lastExpression;
-        lastExpression = "";
-        reference = false;
 
+        lastExpression = "";
         n.f4.accept(this);
 
         HashMap virtualMethodTable = table.classTable.get(objClass).methodOffsets;
