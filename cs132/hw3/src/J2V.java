@@ -243,6 +243,7 @@ public class J2V extends DepthFirstVisitor {
         print("while%d_top:", whileCount);
 
         not = false;
+        localExpressionStack.push(true);
         n.f2.accept(this);
         if (not) {
             String var = newVar();
