@@ -279,7 +279,7 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(AndExpression n) {
         n.f0.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
 
         if (ifNotWhile) {
@@ -315,12 +315,12 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(CompareExpression n) {
         n.f0.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
         String lhs = lastExpression;
 
         n.f2.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
         String rhs = lastExpression;
         lastExpression = String.format("LtS(%s %s)", lhs, rhs);
@@ -333,12 +333,12 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(PlusExpression n) {
         n.f0.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
         String op1 = lastExpression;
 
         n.f2.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
         String op2 = lastExpression;
         lastExpression = String.format("Add(%s %s)", op1, op2);
@@ -350,12 +350,12 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(MinusExpression n) {
         n.f0.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
         String op1 = lastExpression;
 
         n.f2.accept(this);
-        if (complex)
+        if (address || complex)
             lastExpression = printVar(lastExpression);
         String op2 = lastExpression;
         lastExpression = String.format("Sub(%s %s)", op1, op2);
