@@ -37,6 +37,10 @@ public class J2V extends DepthFirstVisitor {
         }
     }
 
+    String newVar() {
+        return String.format("t.%d", varCount++);
+    }
+
     void print(String s, Object... arg) {
         StringBuilder ret = new StringBuilder();
         for (int i = 0; i < indent * 2; i++)
@@ -77,9 +81,8 @@ public class J2V extends DepthFirstVisitor {
                     } else {
                         print("const vmt_%s", type.name);
                         indent++;
-                        for (String s : type.methodOffsets.keySet()) {
+                        for (String s : type.methodOffsets.keySet())
                             print(":%s.%s", type.name, s);
-                        }
                         indent--;
                     }
                     print("");
@@ -112,32 +115,38 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(ClassDeclaration n) {
         table.setClassScope(n.f1.f0.tokenImage);
+
         n.f4.accept(this);
+
         table.clearClassScope();
     }
 
     @Override
     public void visit(ClassExtendsDeclaration n) {
         table.setClassScope(n.f1.f0.tokenImage);
+
         n.f6.accept(this);
+
         table.clearClassScope();
     }
 
     @Override
     public void visit(MethodDeclaration n) {
-        varCount = 0;
         table.setMethodScope(n.f2.f0.tokenImage);
+
         print("func %s(%s)", table.getMethodScope(), table.classScope.getMethodArgsString(n.f2.f0.tokenImage));
+        varCount = 0;
 
         indent++;
         n.f8.accept(this);
-
         reference = false;
         lastExpression = "";
         n.f10.accept(this);
         print("ret %s", lastExpression);
         indent--;
+
         print("");
+
         table.clearMethodScope();
     }
 
@@ -173,26 +182,25 @@ public class J2V extends DepthFirstVisitor {
     @Override
     public void visit(ArrayAssignmentStatement n) {
         n.f0.accept(this);
-        String t1 = String.format("t.%d", varCount++);
+        String t1 = newVar();
         print("%s = %s", t1, lastExpression);
 
         printNullPointerCheck(t1);
 
-        String t2 = String.format("t.%d", this.varCount++);
+        String t2 = newVar();
         print("%s = [%s]", t2, t1);
-
         n.f2.accept(this);
         print("%s = Lt(%s %s)", t2, lastExpression, t2);
+
         int boundCount = this.boundCount++;
         print("if %s goto :bounds%d", t2, boundCount);
         indent++;
         print("Error(\"array index out of bounds\")");
         indent--;
-
         print("bounds%d:", boundCount);
+
         print("%s = MulS(%s 4)", t2, lastExpression);
         print("%s = Add(%s %s)", t2, t2, t1);
-
         n.f5.accept(this);
         print("[%s+4] = %s", t2, lastExpression);
     }
@@ -214,14 +222,14 @@ public class J2V extends DepthFirstVisitor {
 
         indent++;
         n.f4.accept(this);
-
         print("goto :if%d_end", ifCount);
         indent--;
-        print("if%d_else:", ifCount);
 
+        print("if%d_else:", ifCount);
         indent++;
         n.f6.accept(this);
         indent--;
+
         print("if%d_end:", ifCount);
     }
 
@@ -234,16 +242,17 @@ public class J2V extends DepthFirstVisitor {
         not = false;
         n.f2.accept(this);
         if (not) {
-            String var = String.format("t.%d", varCount++);
+            String var = newVar();
             print("%s = Sub(1 %s)", var, lastExpression);
             lastExpression = var;
         }
         print("if0 %s goto :while%d_end", lastExpression, whileCount);
-        indent++;
 
+        indent++;
         n.f4.accept(this);
         print("goto :while%d_top", whileCount);
         indent--;
+
         print("while%d_end:", whileCount);
     }
 
@@ -258,7 +267,7 @@ public class J2V extends DepthFirstVisitor {
     public void visit(Expression n) {
         n.f0.accept(this);
         if ((local || eval) && (lastExpression.contains(" ") || lastExpression.contains("+"))) {
-            String t = String.format("t.%d", varCount++);
+            String t = newVar();
             print("%s = %s", t, lastExpression);
             lastExpression = t;
         }
@@ -273,7 +282,6 @@ public class J2V extends DepthFirstVisitor {
 
         if (ifNotWhile) {
             print("if %s goto :if%d_else", lastExpression, ifCount - 1);
-
             eval = true;
             n.f2.accept(this);
             eval = savedEval;
@@ -285,16 +293,18 @@ public class J2V extends DepthFirstVisitor {
             n.f2.accept(this);
             eval = savedEval;
 
-            int varCount = this.varCount++;
+            String var = newVar();
             indent++;
-            print("t.%d = Sub(1 %s)", varCount, lastExpression);
+            print("%s = Sub(1 %s)", var, lastExpression);
             print("goto :ss%d_end", ss);
             indent--;
+
             print("ss%d_else:", ss);
             indent++;
-            lastExpression = String.format("t.%d", varCount);
+            lastExpression = var;
             print("%s = 0", lastExpression);
             indent--;
+
             print("ss%d_end:", ss);
             not = false;
         }
@@ -364,7 +374,7 @@ public class J2V extends DepthFirstVisitor {
         String t1 = lastExpression;
         printNullPointerCheck(t1);
 
-        String t2 = String.format("t.%d", varCount++);
+        String t2 = newVar();
         print("%s = [%s]", t2, t1);
         n.f2.accept(this);
         print("%s = Lt(%s %s)", t2, lastExpression, t2);
@@ -406,7 +416,7 @@ public class J2V extends DepthFirstVisitor {
         if (virtualMethodTable.isEmpty() || !virtualMethodTable.containsKey(n.f2.f0.tokenImage)) {
             lastExpression = String.format("call :%s.%s(%s%s)", objClass, n.f2.f0.tokenImage, callInstance, lastExpression);
         } else {
-            String var = String.format("t.%d", varCount++);
+            String var = newVar();
             print("%s = [%s]", var, callInstance);
             print("%s = [%s+%d]", var, var, virtualMethodTable.get(n.f2.f0.tokenImage));
             lastExpression = String.format("call %s(%s%s)", var, callInstance, lastExpression);
@@ -429,8 +439,9 @@ public class J2V extends DepthFirstVisitor {
         newAlloc = false;
         n.f0.accept(this);
         if ((local || eval) && (lastExpression.contains("+") || newAlloc)) {
-            print("t.%d = %s", varCount, lastExpression);
-            lastExpression = String.format("t.%d", varCount++);
+            String var = newVar();
+            print("%s = %s", var, lastExpression);
+            lastExpression = var;
             if (newAlloc)
                 printNullPointerCheck(lastExpression);
         }
@@ -465,7 +476,7 @@ public class J2V extends DepthFirstVisitor {
         if (type != null) {
             if (reference && type != MyType.ARRAY && type != MyType.BOOLEAN && type != MyType.INTEGER) {
                 if (offset != null) {
-                    lastExpression = String.format("t.%d", varCount++);
+                    lastExpression = newVar();
                     print("%s = [%s+%d]", lastExpression, objClass, offset);
                 }
                 printNullPointerCheck(lastExpression);
@@ -484,8 +495,9 @@ public class J2V extends DepthFirstVisitor {
     public void visit(ArrayAllocationExpression n) {
         allocArray = true;
         n.f3.accept(this);
-        print("t.%d = call :AllocArray(%s)", varCount, lastExpression);
-        lastExpression = String.format("t.%d", varCount++);
+        String var = newVar();
+        print("%s = call :AllocArray(%s)", var, lastExpression);
+        lastExpression = var;
     }
 
     @Override
@@ -496,7 +508,7 @@ public class J2V extends DepthFirstVisitor {
             lastExpression = String.format("HeapAllocZ(%d)", size);
             HashMap<String, Integer> virtualMethodTable = table.classTable.get(objClass).methodOffsets;
             if (!virtualMethodTable.isEmpty()) {
-                String var = String.format("t.%d", varCount++);
+                String var = newVar();
                 print("%s = %s", var, lastExpression);
                 print("[%s] = :vmt_%s", var, objClass);
                 lastExpression = var;
