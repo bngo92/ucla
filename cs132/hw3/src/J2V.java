@@ -224,11 +224,8 @@ public class J2V extends DepthFirstVisitor {
         ifNotWhile = true;
 
         n.f2.accept(this);
-        if (address || complex) {
-            String var = newVar();
-            print("%s = %s", var, lastExpression);
-            lastExpression = var;
-        }
+        if (address || complex)
+            lastExpression = printVar(lastExpression);
         ifNotWhile = false;
         if (not)
             print("if %s goto :if%d_else", lastExpression, ifCount);
@@ -296,8 +293,8 @@ public class J2V extends DepthFirstVisitor {
             n.f2.accept(this);
             lastExpression = printVar(lastExpression);
 
-            String var = newVar();
             indent++;
+            String var = newVar();
             print("%s = Sub(1 %s)", var, lastExpression);
             print("goto :ss%d_end", ss);
             indent--;
@@ -443,6 +440,9 @@ public class J2V extends DepthFirstVisitor {
             print("%s = [%s+%d]", var, var, virtualMethodTable.get(n.f2.f0.tokenImage));
             lastExpression = String.format("call %s(%s%s)", var, callInstance, lastExpression);
         }
+
+        address = false;
+        complex = true;
     }
 
     @Override
