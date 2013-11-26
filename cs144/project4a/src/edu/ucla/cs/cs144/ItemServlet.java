@@ -9,11 +9,13 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
+
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.ErrorHandler;
+
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -21,8 +23,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class ItemServlet extends HttpServlet implements Servlet {
-       
-    public ItemServlet() {}
+
+    public ItemServlet() {
+    }
 
 
     public static Element getElementByTagNameNR(Element e, String tagName) {
@@ -44,12 +47,11 @@ public class ItemServlet extends HttpServlet implements Servlet {
     }
 
     public static Element[] getElementsByTagNameNR(Element e, String tagName) {
-        Vector< Element > elements = new Vector< Element >();
+        Vector<Element> elements = new Vector<Element>();
         Node child = e.getFirstChild();
         while (child != null) {
-            if (child instanceof Element && child.getNodeName().equals(tagName))
-            {
-                elements.add( (Element)child );
+            if (child instanceof Element && child.getNodeName().equals(tagName)) {
+                elements.add((Element) child);
             }
             child = child.getNextSibling();
         }
@@ -62,8 +64,7 @@ public class ItemServlet extends HttpServlet implements Servlet {
         if (e.getChildNodes().getLength() == 1) {
             Text elementText = (Text) e.getFirstChild();
             return elementText.getNodeValue();
-        }
-        else
+        } else
             return "";
     }
 
@@ -73,8 +74,9 @@ public class ItemServlet extends HttpServlet implements Servlet {
         else {
             double am = 0.0;
             NumberFormat nf = NumberFormat.getCurrencyInstance(Locale.US);
-            try { am = nf.parse(money).doubleValue(); }
-            catch (ParseException e) {
+            try {
+                am = nf.parse(money).doubleValue();
+            } catch (ParseException e) {
                 System.out.println("This method should work for all " +
                         "money values you find in our data.");
                 System.exit(20);
@@ -100,8 +102,7 @@ public class ItemServlet extends HttpServlet implements Servlet {
         return "";
     }
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
-    {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String result = AuctionSearchClient.getXMLDataForItemId(request.getParameter("id"));
         Document doc = null;
         try {
@@ -121,8 +122,7 @@ public class ItemServlet extends HttpServlet implements Servlet {
 
         Element[] categories = getElementsByTagNameNR(item, "Category");
         String[] cats = new String[categories.length];
-        for(int i=0; i<categories.length; i++)
-        {
+        for (int i = 0; i < categories.length; i++) {
             Element category = categories[i];
             cats[i] = getElementText(category);
         }
@@ -168,9 +168,15 @@ public class ItemServlet extends HttpServlet implements Servlet {
             bidList.add(b);
         }
         Bid[] bidArray = bidList.toArray(new Bid[bidList.size()]);
-        Arrays.sort(bidArray, new Comparator<Bid>() { public int compare(Bid a, Bid b) { return a.datetime.compareTo(b.datetime); }} );
-
+        Arrays.sort(bidArray, new Comparator<Bid>() {
+            public int compare(Bid a, Bid b) {
+                return a.datetime.compareTo(b.datetime);
+            }
+        });
         request.setAttribute("bids", bidArray);
+
+        String address = getElementTextByTagNameNR(item, "Location") + " " + getElementTextByTagNameNR(item, "Country") ;
+        request.setAttribute("address", address);
 
         request.getRequestDispatcher("/getItem.jsp").forward(request, response);
     }
