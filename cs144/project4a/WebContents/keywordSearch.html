@@ -4,8 +4,14 @@
     <title></title>
 </head>
 <body>
+<script type="text/javascript" src="suggest.js"></script>
+<script type="text/javascript">
+    window.onload = function () {
+        var oTextbox = new AutoSuggestControl(document.getElementById("suggest"), new Suggestions()));
+    }
+</script>
 <form action="/eBay/search">
-    <input type="text" name="q">
+    <input type="text" id="suggest" name="q">
     <input type="hidden" name="numResultsToSkip" value="0">
     <input type="hidden" name="numResultsToReturn" value="20">
     <button type="submit">Submit</button>
