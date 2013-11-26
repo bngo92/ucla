@@ -2,8 +2,34 @@
 <html>
 <head>
     <title></title>
+    <script type="text/javascript"
+        src="http://maps.google.com/maps/api/js?sensor=false">
+    </script>
+    <script type="text/javascript">
+      function initialize() {
+ 	var latlng = new google.maps.LatLng(34.063509, -118.44541);
+        var myOptions = { 
+	  zoom: 1,
+	  center:latlng,
+	  mapTypeId: google.maps.MapTypeId.ROADMAP
+        }; 
+	var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+	
+	var geocoder = new google.maps.Geocoder();
+	var address = "<%=request.getAttribute("address") %>";
+	
+	geocoder.geocode({'address':address }, function(results,status) {
+          if(status==google.maps.GeocoderStatus.OK) {
+  	    map.setCenter(results[0].geometry.location);
+	    map.setZoom(8);
+     	  }
+	} );
+
+      }
+      
+    </script>
 </head>
-<body>
+<body onload="initialize()">
 <form action="/eBay/item">
     <input type="text" name="id">
     <button type="submit">Submit</button>
@@ -22,6 +48,7 @@ Currently: <%=request.getAttribute("Currently")%>
 <%=request.getAttribute("Description")%>
 <br>
 <br>
+<div id="map_canvas" style="width:300px; height:300px"></div>
 <h2> Bids for this Item </h2>
 <dl>
 <%
