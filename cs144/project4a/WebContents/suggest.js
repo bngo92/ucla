@@ -169,7 +169,7 @@ AutoSuggestControl.prototype.previousSuggestion = function () {
 Suggestions.prototype.requestSuggestions = function (oAutoSuggestControl, bTypeAhead) {
     if (xmlHttp.readyState == 4) {
         console.log(xmlHttp.responseText);
-        this.suggestions = eval(xmlHttp.responseText);
+        this.suggestions = JSON.parse(xmlHttp.responseText);
     }
     var aSuggestions = [];
     var sTextboxValue = oAutoSuggestControl.textbox.value;
