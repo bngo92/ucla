@@ -176,6 +176,8 @@ public class ItemServlet extends HttpServlet implements Servlet {
         request.setAttribute("bids", bidArray);
 
         String address = getElementTextByTagNameNR(item, "Location") + " " + getElementTextByTagNameNR(item, "Country") ;
+        address = address.replace("\"", "");
+
         request.setAttribute("address", address);
 
         request.getRequestDispatcher("/getItem.jsp").forward(request, response);
