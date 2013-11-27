@@ -25,6 +25,8 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="axis2-kernel-1.4" level="project" />
+    <orderEntry type="library" name="lib" level="project" />
   </component>
 </module>
 

@@ -132,8 +132,6 @@ public class AuctionSearch implements IAuctionSearch {
                         if (!validIds.contains(searchResult.getItemId()))
                             resultsIt.remove();
                     }
-                    System.out.println("VALID ID'S: "+validIds.size());
-                    System.out.println("HITS LENGTH: "+hits.length());
                 }
             } else {
                 Connection conn;
@@ -237,12 +235,13 @@ public class AuctionSearch implements IAuctionSearch {
                     Element bid = doc.createElement("Bid");
                     bidArray.add(bid);
 
-                    userStatement.setString(1, bids.getString("UserID"));
+                    userStatement.setString(1, bids.getString("Bidder"));
                     ResultSet bidderAttributes = userStatement.executeQuery();
+                    bidderAttributes.next();
 
                     Element bidder = doc.createElement("Bidder");
-                    bidder.setAttribute("UserID", escape(bidderAttributes.getString("UserID")));
                     bidder.setAttribute("Rating", escape(bidderAttributes.getString("Rating")));
+                    bidder.setAttribute("UserID", escape(bidderAttributes.getString("UserID")));
                     bid.appendChild(bidder);
 
                     if (bidderAttributes.getString("Location") != null) {
@@ -280,7 +279,7 @@ public class AuctionSearch implements IAuctionSearch {
                     rootElement.appendChild(buyPrice);
                 }
 
-                Element firstBid = doc.createElement("FirstBid");
+                Element firstBid = doc.createElement("First_Bid");
                 firstBid.appendChild(doc.createTextNode(df.format(rs.getDouble("First_Bid"))));
                 rootElement.appendChild(firstBid);
 
