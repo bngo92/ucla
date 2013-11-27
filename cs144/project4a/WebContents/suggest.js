@@ -1,3 +1,5 @@
+var xmlHttp;
+
 function AutoSuggestControl(oTextbox, oProvider) {
     this.cur = -1;
     this.layer = null;
@@ -35,7 +37,10 @@ AutoSuggestControl.prototype.handleKeyUp = function (oEvent) {
     } else if (iKeyCode < 32 || (iKeyCode >= 33 && iKeyCode <= 46) || (iKeyCode >= 112 && iKeyCode <= 123)) {
         // ignore
     } else {
-        this.provider.requestSuggestions(this, true);
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = this.provider.requestSuggestions(this, true);
+        xmlHttp.open("GET", "/eBay/suggest?q=" + this.textbox.value);
+        xmlHttp.send(null);
     }
 };
 
@@ -162,6 +167,10 @@ AutoSuggestControl.prototype.previousSuggestion = function () {
 };
 
 Suggestions.prototype.requestSuggestions = function (oAutoSuggestControl, bTypeAhead) {
+    if (xmlHttp.readyState == 4) {
+        console.log(xmlHttp.responseText);
+        this.suggestions = eval(xmlHttp.responseText);
+    }
     var aSuggestions = [];
     var sTextboxValue = oAutoSuggestControl.textbox.value;
     if (sTextboxValue.length > 0) {
@@ -175,18 +184,5 @@ Suggestions.prototype.requestSuggestions = function (oAutoSuggestControl, bTypeA
 };
 
 function Suggestions() {
-    this.suggestions = [
-        "Alabama", "Alaska", "Arizona", "Arkansas",
-        "California", "Colorado", "Connecticut",
-        "Delaware", "Florida", "Georgia", "Hawaii",
-        "Idaho", "Illinois", "Indiana", "Iowa",
-        "Kansas", "Kentucky", "Louisiana",
-        "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
-        "Mississippi", "Missouri", "Montana",
-        "Nebraska", "Nevada", "New Hampshire", "New Mexico", "New York",
-        "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon",
-        "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
-        "Tennessee", "Texas", "Utah", "Vermont", "Virginia",
-        "Washington", "West Virginia", "Wisconsin", "Wyoming"
-    ];
+    this.suggestions = [];
 }

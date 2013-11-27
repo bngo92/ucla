@@ -90,26 +90,24 @@ public class ProxyServlet extends HttpServlet implements Servlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
-        /*
         HttpURLConnection connection = (HttpURLConnection) new URL("http://google.com/complete/search?output=toolbar&q=" + request.getParameter("q")).openConnection();
         InputStream in = new BufferedInputStream(connection.getInputStream());
         response.setContentType("text/xml");
-        response.getWriter().write(new Scanner(in).useDelimiter("\\A").next());
+        String suggestResponse = new Scanner(in).useDelimiter("\\A").next();
         connection.disconnect();
-        in.close()
-        */
+        in.close();
 
-        String[] s = getSuggestions(request.getParameter("q"));
-        String toWrite = "StateSuggestions() { this.states=[";
+        String[] s = getSuggestions(suggestResponse);
+        String toWrite = "[";
         if(s.length>0)
         {
             toWrite += "\""+s[0]+"\"";
-            for(int i=1; i<s.length; s++)
+            for(int i=1; i<s.length; i++)
             {
                 toWrite+= ",\""+s[0]+"\"";
             }
         }
-        toWrite+="];}";
+        toWrite+="]";
 
         response.setContentType("text/json");
         response.getWriter().write(toWrite);
