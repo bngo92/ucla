@@ -76,7 +76,7 @@ public class ProxyServlet extends HttpServlet implements Servlet {
             Element[] suggestions = getElementsByTagNameNR(toplevel, "CompleteSuggestion");
             strs = new String[suggestions.length];
             for (int i = 0; i < suggestions.length; i++) {
-                Element e = getElementByTagNameNR(suggestions[i], "Suggestion");
+                Element e = getElementByTagNameNR(suggestions[i], "suggestion");
                 String s = e.getAttribute("data");
                 strs[i] = s;
             }
@@ -90,21 +90,22 @@ public class ProxyServlet extends HttpServlet implements Servlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
+        /*
         HttpURLConnection connection = (HttpURLConnection) new URL("http://google.com/complete/search?output=toolbar&q=" + request.getParameter("q")).openConnection();
         InputStream in = new BufferedInputStream(connection.getInputStream());
         response.setContentType("text/xml");
         String suggestResponse = new Scanner(in).useDelimiter("\\A").next();
         connection.disconnect();
         in.close();
-
-        String[] s = getSuggestions(suggestResponse);
+        */
+        String[] s = getSuggestions(request.getParameter("q"));
         String toWrite = "[";
         if(s.length>0)
         {
             toWrite += "\""+s[0]+"\"";
             for(int i=1; i<s.length; i++)
             {
-                toWrite+= ",\""+s[0]+"\"";
+                toWrite+= ",\""+s[i]+"\"";
             }
         }
         toWrite+="]";
