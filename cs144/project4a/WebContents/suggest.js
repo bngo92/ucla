@@ -31,14 +31,26 @@ AutoSuggestControl.prototype.autosuggest = function (aSuggestions, bTypeAhead) {
 };
 
 AutoSuggestControl.prototype.handleKeyUp = function (oEvent) {
+    var oThis = this;
     var iKeyCode = oEvent.keyCode;
     if (iKeyCode == 8 || iKeyCode == 46) {
-        this.provider.requestSuggestions(this, false);
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function () {
+            if (xmlHttp.readyState == 4) {
+                oThis.provider.requestSuggestions(oThis, false, JSON.parse(xmlHttp.responseText));
+            }
+        }
+        xmlHttp.open("GET", "/eBay/suggest?q=" + this.textbox.value);
+        xmlHttp.send(null);
     } else if (iKeyCode < 32 || (iKeyCode >= 33 && iKeyCode <= 46) || (iKeyCode >= 112 && iKeyCode <= 123)) {
         // ignore
     } else {
         xmlHttp = new XMLHttpRequest();
-        xmlHttp.onreadystatechange = this.provider.requestSuggestions(this, true);
+        xmlHttp.onreadystatechange = function () {
+            if (xmlHttp.readyState == 4) {
+                oThis.provider.requestSuggestions(oThis, true, JSON.parse(xmlHttp.responseText));
+            }
+        }
         xmlHttp.open("GET", "/eBay/suggest?q=" + this.textbox.value);
         xmlHttp.send(null);
     }
@@ -166,17 +178,13 @@ AutoSuggestControl.prototype.previousSuggestion = function () {
     }
 };
 
-Suggestions.prototype.requestSuggestions = function (oAutoSuggestControl, bTypeAhead) {
-    if (xmlHttp.readyState == 4) {
-        console.log(xmlHttp.responseText);
-        this.suggestions = eval(xmlHttp.responseText);
-    }
+Suggestions.prototype.requestSuggestions = function (oAutoSuggestControl, bTypeAhead, suggestions) {
     var aSuggestions = [];
     var sTextboxValue = oAutoSuggestControl.textbox.value;
     if (sTextboxValue.length > 0) {
-        for (var i = 0; i < this.suggestions.length; i++) {
-            if (this.suggestions[i].indexOf(sTextboxValue) == 0) {
-                aSuggestions.push(this.suggestions[i]);
+        for (var i = 0; i < suggestions.length; i++) {
+            if (suggestions[i].indexOf(sTextboxValue) == 0) {
+                aSuggestions.push(suggestions[i]);
             }
         }
         oAutoSuggestControl.autosuggest(aSuggestions, bTypeAhead);
@@ -184,5 +192,4 @@ Suggestions.prototype.requestSuggestions = function (oAutoSuggestControl, bTypeA
 };
 
 function Suggestions() {
-    this.suggestions = [];
 }
