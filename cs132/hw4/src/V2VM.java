@@ -11,7 +11,6 @@ import java.util.*;
 
 public class V2VM extends VInstr.Visitor<Throwable> {
 
-    public static int out;
     private static IndentPrinter printer;
     private static LinkedHashMap<String,String> registerMap;
     private static HashMap<String,Liveness.Thing> registerMapBuilder;
@@ -105,7 +104,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             if (in < 0)
                 in = 0;
 
-            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, in, out, s));
+            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, in, liveness.out, s));
             printer.indent();
 
             for (int i = 0; i < s; i++)
@@ -157,9 +156,6 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             else
                 printer.println(String.format("out[%d] = %s", i - 4, rhs));
         }
-
-        if (vCall.args.length - 4 > out)
-            out = vCall.args.length - 4;
 
         printer.println(String.format("call %s", registerMap.get(vCall.addr.toString())));
         printer.println(String.format("%s = $v0", registerMap.get(vCall.dest.toString())));

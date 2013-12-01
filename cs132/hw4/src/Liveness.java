@@ -26,6 +26,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         }
     }
 
+    public int out;
     public String label;
     public final LinkedHashMap<String, Thing> things;
 
@@ -101,6 +102,9 @@ public class Liveness extends VInstr.Visitor<Throwable> {
                 thing.range.end = line;
             }
         }
+
+        if (vCall.args.length - 4 > this.out)
+            this.out = vCall.args.length - 4;
     }
 
     @Override
