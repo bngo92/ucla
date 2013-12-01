@@ -203,8 +203,12 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
     @Override
     public void visit(VReturn vReturn) throws Throwable {
-        if (vReturn.value != null)
-            printer.println(String.format("$v0 = %s", registerMap.get(vReturn.value.toString())));
+        if (vReturn.value != null) {
+            String value = registerMap.get(vReturn.value.toString());
+            if (value == null)
+                value = vReturn.value.toString();
+            printer.println(String.format("$v0 = %s", value));
+        }
         for (int i = 0; registerMapBuilder.containsKey(String.format("$s%d", i)); i++)
             printer.println(String.format("$s%d = local[%d]", i, i));
         printer.println("ret");
