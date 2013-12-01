@@ -157,7 +157,10 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 printer.println(String.format("out[%d] = %s", i - 4, rhs));
         }
 
-        printer.println(String.format("call %s", registerMap.get(vCall.addr.toString())));
+        String addr = registerMap.get(vCall.addr.toString());
+        if (addr == null)
+            addr = vCall.addr.toString();
+        printer.println(String.format("call %s", addr));
         printer.println(String.format("%s = $v0", registerMap.get(vCall.dest.toString())));
     }
 
