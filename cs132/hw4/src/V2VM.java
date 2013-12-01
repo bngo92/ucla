@@ -27,7 +27,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
         VaporProgram program = null;
         try {
-            program = VaporParser.run(new InputStreamReader(System.in), 1, 1,
+            program = VaporParser.run(new InputStreamReader(new FileInputStream("MoreThan4.vapor")), 1, 1,
                     java.util.Arrays.asList(ops),
                     allowLocals, registers, allowStack);
         } catch (ProblemException ex) {
@@ -185,7 +185,11 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
     @Override
     public void visit(VMemRead vMemRead) throws Throwable {
-        printer.println(String.format("%s = [%s]", registerMap.get(vMemRead.dest.toString()), registerMap.get(((VMemRef.Global) vMemRead.source).base.toString())));
+        VMemRef.Global source = (VMemRef.Global) vMemRead.source;
+        if (((VMemRef.Global) vMemRead.source).byteOffset == 0)
+            printer.println(String.format("%s = [%s]", registerMap.get(vMemRead.dest.toString()), registerMap.get(source.base.toString())));
+        else
+            printer.println(String.format("%s = [%s+%d]", registerMap.get(vMemRead.dest.toString()), registerMap.get(source.base.toString()), source.byteOffset));
     }
 
     @Override
