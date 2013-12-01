@@ -172,9 +172,9 @@ public class V2VM extends VInstr.Visitor<Throwable> {
     @Override
     public void visit(VBranch vBranch) throws Throwable {
         if (vBranch.positive)
-            printer.println(String.format("if0 %s goto %s", registerMap.get(vBranch.value.toString()), vBranch.target));
-        else
             printer.println(String.format("if %s goto %s", registerMap.get(vBranch.value.toString()), vBranch.target));
+        else
+            printer.println(String.format("if0 %s goto %s", registerMap.get(vBranch.value.toString()), vBranch.target));
     }
 
     @Override
