@@ -11,6 +11,7 @@ import java.util.*;
 
 public class V2VM extends VInstr.Visitor<Throwable> {
 
+    public static int out;
     private static IndentPrinter printer;
     private static LinkedHashMap<String,String> registerMap;
     private static HashMap<String,Liveness.Thing> registerMapBuilder;
@@ -100,14 +101,23 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 }
             }
 
-            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, function.stack.in, function.stack.out, s));
+            int in = function.params.length - 4;
+            if (in < 0)
+                in = 0;
+
+            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, in, out, s));
             printer.indent();
 
             for (int i = 0; i < s; i++)
                 printer.println(String.format("local[%d] = $s%d", i, i));
 
-            for (int i = 0; i < function.params.length; i++)
-                printer.println(String.format("%s = $a%d", registerMap.get(function.params[i].toString()), i));
+            for (int i = 0; i < function.params.length; i++) {
+                String register = registerMap.get(function.params[i].toString());
+                if (i < 4)
+                    printer.println(String.format("%s = $a%d", register, i));
+                else
+                    printer.println(String.format("%s = in[%d]", register, i - 4));
+            }
 
             Collections.addAll(labels, function.labels);
             for (VInstr instr : function.body) {
@@ -138,12 +148,19 @@ public class V2VM extends VInstr.Visitor<Throwable> {
     @Override
     public void visit(VCall vCall) throws Throwable {
         for (int i = 0; i < vCall.args.length; i++) {
-            String arg = String.format("$a%d", i);
-            String register = registerMap.get(vCall.args[i].toString());
-            if (register == null)
-                register = vCall.args[i].toString();
-            printer.println(String.format("%s = %s", arg, register));
+            String rhs = registerMap.get(vCall.args[i].toString());
+            if (rhs == null)
+                rhs = vCall.args[i].toString();
+
+            if (i < 4)
+                printer.println(String.format("$a%d = %s", i, rhs));
+            else
+                printer.println(String.format("out[%d] = %s", i - 4, rhs));
         }
+
+        if (vCall.args.length - 4 > out)
+            out = vCall.args.length - 4;
+
         printer.println(String.format("call %s", registerMap.get(vCall.addr.toString())));
         printer.println(String.format("%s = $v0", registerMap.get(vCall.dest.toString())));
     }
