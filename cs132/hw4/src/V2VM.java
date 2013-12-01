@@ -49,14 +49,20 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             LinkedList<VCodeLabel> labels = new LinkedList<VCodeLabel>();
             Collections.addAll(labels, function.labels);
 
+            // Preallocate function arguments
             Liveness liveness = new Liveness();
             for (VVarRef varRef : function.params) {
                 String var = varRef.toString();
                 liveness.things.put(var, new Liveness.Thing(var, varRef.sourcePos.line));
             }
 
-            for (VInstr instr : function.body)
+            int line;
+            for (VInstr instr : function.body) {
+                line = instr.sourcePos.line;
+                if (!labels.isEmpty() && labels.peek().sourcePos.line < line)
+                    liveness.label = labels.pop().ident;
                 instr.accept(liveness);
+            }
 
             CrossCall call = new CrossCall(liveness.things);
             for (VInstr instr : function.body)
@@ -103,7 +109,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             for (int i = 0; i < function.params.length; i++)
                 printer.println(String.format("%s = $a%d", registerMap.get(function.params[i].toString()), i));
 
-            int line;
+            Collections.addAll(labels, function.labels);
             for (VInstr instr : function.body) {
                 line = instr.sourcePos.line;
                 if (!labels.isEmpty() && labels.peek().sourcePos.line < line) {
