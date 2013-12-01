@@ -12,6 +12,7 @@ import java.util.*;
 public class V2VM extends VInstr.Visitor<Throwable> {
 
     private static IndentPrinter printer;
+    private static LinkedHashMap<String,String> registerMap;
 
     public static void main(String[] args)
             throws Throwable {
@@ -50,6 +51,43 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, function.stack.in, function.stack.out, function.stack.local));
             printer.indent();
 
+            Liveness liveness = new Liveness();
+            for (VVarRef varRef : function.params) {
+                String var = varRef.toString();
+                liveness.things.put(var, new Liveness.Thing(var, varRef.sourcePos.line));
+            }
+
+            for (VInstr instr : function.body)
+                instr.accept(liveness);
+
+            registerMap = new LinkedHashMap<String, String>();
+            HashMap<String, Liveness.Thing> registerMapBuilder = new HashMap<String, Liveness.Thing>();
+            int last = 0;
+            for (Liveness.Thing thing : liveness.things.values()) {
+                String register = String.format("$t%d", last);
+                Liveness.Thing saved = registerMapBuilder.get(register);
+                if (saved == null || thing.range.start >= saved.range.end) {
+                    registerMap.put(thing.var, register);
+                    registerMapBuilder.put(register, thing);
+                    continue;
+                }
+
+                for (int i = 0; i < 9; i++) {
+                    register = String.format("$t%d", i);
+                    saved = registerMapBuilder.get(register);
+                    if (saved == null || thing.range.start >= saved.range.end) {
+                        registerMap.put(thing.var, register);
+                        registerMapBuilder.put(register, thing);
+                        last = i;
+                        break;
+                    }
+                }
+            }
+
+            for (int i = 0; i < function.params.length; i++) {
+                printer.println(String.format("%s = $a%d", registerMap.get(function.params[i].toString()), i));
+            }
+
             int line;
             for (VInstr instr : function.body) {
                 line = instr.sourcePos.line;
@@ -68,53 +106,54 @@ public class V2VM extends VInstr.Visitor<Throwable> {
         printer.close();
     }
 
-    private String formatVarRef(String s) {
-        if (s.contains("."))
-            return String.format("$%s", s.replace(".", ""));
-        else
-            return s;
-    }
-
     @Override
     public void visit(VAssign vAssign) throws Throwable {
-        printer.println(String.format("%s = %s", formatVarRef(vAssign.dest.toString()), formatVarRef(vAssign.source.toString())));
+        printer.println(String.format("%s = %s", registerMap.get(vAssign.dest.toString()), registerMap.get(vAssign.source.toString())));
     }
 
     @Override
     public void visit(VCall vCall) throws Throwable {
         for (int i = 0; i < vCall.args.length; i++) {
             String arg = String.format("$a%d", i);
-            printer.println(String.format("%s = %s", arg, formatVarRef(vCall.args[i].toString())));
+            String register = registerMap.get(vCall.args[i].toString());
+            if (register == null)
+                register = vCall.args[i].toString();
+            printer.println(String.format("%s = %s", arg, register));
         }
-        printer.println(String.format("call %s", formatVarRef(vCall.addr.toString())));
-        printer.println(String.format("%s = $v0", formatVarRef(vCall.addr.toString())));
+        printer.println(String.format("call %s", registerMap.get(vCall.addr.toString())));
+        printer.println(String.format("%s = $v0", registerMap.get(vCall.dest.toString())));
     }
 
     @Override
     public void visit(VBuiltIn vBuiltIn) throws Throwable {
         ArrayList<String> args = new ArrayList<String>();
-        for (VOperand operand : vBuiltIn.args)
-            args.add(formatVarRef(operand.toString()));
+        for (VOperand operand : vBuiltIn.args) {
+            String register = registerMap.get(operand.toString());
+            if (register == null)
+                args.add(operand.toString());
+            else
+                args.add(register);
+        }
 
         if (vBuiltIn.dest != null)
-            printer.println(String.format("%s = %s(%s)", formatVarRef(vBuiltIn.dest.toString()), vBuiltIn.op.name, StringUtil.join(args, " ")));
+            printer.println(String.format("%s = %s(%s)", registerMap.get(vBuiltIn.dest.toString()), vBuiltIn.op.name, StringUtil.join(args, " ")));
         else
             printer.println(String.format("%s(%s)", vBuiltIn.op.name, StringUtil.join(args, " ")));
     }
 
     @Override
     public void visit(VMemWrite vMemWrite) throws Throwable {
-        printer.println(String.format("[%s] = %s", formatVarRef(((VMemRef.Global) vMemWrite.dest).base.toString()), vMemWrite.source.toString()));
+        printer.println(String.format("[%s] = %s", registerMap.get(((VMemRef.Global) vMemWrite.dest).base.toString()), vMemWrite.source.toString()));
     }
 
     @Override
     public void visit(VMemRead vMemRead) throws Throwable {
-        printer.println(String.format("%s = [%s]", formatVarRef(vMemRead.dest.toString()), formatVarRef(((VMemRef.Global) vMemRead.source).base.toString())));
+        printer.println(String.format("%s = [%s]", registerMap.get(vMemRead.dest.toString()), registerMap.get(((VMemRef.Global) vMemRead.source).base.toString())));
     }
 
     @Override
     public void visit(VBranch vBranch) throws Throwable {
-        printer.println(String.format("if %s goto %s", formatVarRef(vBranch.value.toString()), vBranch.target));
+        printer.println(String.format("if %s goto %s", registerMap.get(vBranch.value.toString()), vBranch.target));
     }
 
     @Override
@@ -124,6 +163,8 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
     @Override
     public void visit(VReturn vReturn) throws Throwable {
+        if (vReturn.value != null)
+            printer.println(String.format("$v0 = %s", registerMap.get(vReturn.value.toString())));
         printer.println("ret");
     }
 }
