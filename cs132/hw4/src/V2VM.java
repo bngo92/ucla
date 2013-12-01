@@ -64,10 +64,6 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 instr.accept(liveness);
             }
 
-            for (Liveness.Thing thing : liveness.things.values()) {
-                System.err.println(String.format("%s: %d, %d", thing.var, thing.range.start, thing.range.end));
-            }
-
             CrossCall call = new CrossCall(liveness.things);
             for (VInstr instr : function.body)
                 instr.accept(call);
