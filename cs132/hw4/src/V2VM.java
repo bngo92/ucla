@@ -94,10 +94,10 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 }
             }
 
-            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, function.stack.in, function.stack.out, function.stack.local));
+            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, function.stack.in, function.stack.out, s));
             printer.indent();
 
-            for (int i = 0; registerMapBuilder.containsKey(String.format("$s%d", i)); i++)
+            for (int i = 0; i < s; i++)
                 printer.println(String.format("local[%d] = $s%d", i, i));
 
             for (int i = 0; i < function.params.length; i++)
