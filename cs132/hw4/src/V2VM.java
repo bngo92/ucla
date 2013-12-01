@@ -27,7 +27,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
         VaporProgram program = null;
         try {
-            program = VaporParser.run(new InputStreamReader(System.in), 1, 1,
+            program = VaporParser.run(new InputStreamReader(new FileInputStream("BubbleSort.vapor")), 1, 1,
                     java.util.Arrays.asList(ops),
                     allowLocals, registers, allowStack);
         } catch (ProblemException ex) {

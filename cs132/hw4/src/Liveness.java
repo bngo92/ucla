@@ -87,11 +87,11 @@ public class Liveness extends VInstr.Visitor<Throwable> {
 
         String in = vCall.addr.toString();
         Thing thing = things.get(in);
-        if (out.equals(in))
-            coalesce = true;
-        thing.range.end = line;
-        if (label != null)
-            thing.labels.add(label);
+        if (thing != null) {
+            if (out.equals(in))
+                coalesce = true;
+            thing.range.end = line;
+        }
 
         if (!coalesce) {
             thing = things.get(out);
