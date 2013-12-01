@@ -13,6 +13,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
     private static IndentPrinter printer;
     private static LinkedHashMap<String,String> registerMap;
+    private static HashMap<String,Liveness.Thing> registerMapBuilder;
 
     public static void main(String[] args)
             throws Throwable {
@@ -26,7 +27,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
         VaporProgram program = null;
         try {
-            program = VaporParser.run(new InputStreamReader(new FileInputStream("Factorial.vapor")), 1, 1,
+            program = VaporParser.run(new InputStreamReader(System.in), 1, 1,
                     java.util.Arrays.asList(ops),
                     allowLocals, registers, allowStack);
         } catch (ProblemException ex) {
@@ -48,9 +49,6 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             LinkedList<VCodeLabel> labels = new LinkedList<VCodeLabel>();
             Collections.addAll(labels, function.labels);
 
-            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, function.stack.in, function.stack.out, function.stack.local));
-            printer.indent();
-
             Liveness liveness = new Liveness();
             for (VVarRef varRef : function.params) {
                 String var = varRef.toString();
@@ -60,10 +58,22 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             for (VInstr instr : function.body)
                 instr.accept(liveness);
 
+            CrossCall call = new CrossCall(liveness.things);
+            for (VInstr instr : function.body)
+                instr.accept(call);
+
             registerMap = new LinkedHashMap<String, String>();
-            HashMap<String, Liveness.Thing> registerMapBuilder = new HashMap<String, Liveness.Thing>();
+            registerMapBuilder = new HashMap<String, Liveness.Thing>();
             int last = 0;
+            int s = 0;
             for (Liveness.Thing thing : liveness.things.values()) {
+                if (thing.crossCall) {
+                    String register = String.format("$s%d", s++);
+                    registerMap.put(thing.var, register);
+                    registerMapBuilder.put(register, null);
+                    continue;
+                }
+
                 String register = String.format("$t%d", last);
                 Liveness.Thing saved = registerMapBuilder.get(register);
                 if (saved == null || thing.range.start >= saved.range.end) {
@@ -84,9 +94,14 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 }
             }
 
-            for (int i = 0; i < function.params.length; i++) {
+            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, function.stack.in, function.stack.out, function.stack.local));
+            printer.indent();
+
+            for (int i = 0; registerMapBuilder.containsKey(String.format("$s%d", i)); i++)
+                printer.println(String.format("local[%d] = $s%d", i, i));
+
+            for (int i = 0; i < function.params.length; i++)
                 printer.println(String.format("%s = $a%d", registerMap.get(function.params[i].toString()), i));
-            }
 
             int line;
             for (VInstr instr : function.body) {
@@ -108,7 +123,10 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
     @Override
     public void visit(VAssign vAssign) throws Throwable {
-        printer.println(String.format("%s = %s", registerMap.get(vAssign.dest.toString()), registerMap.get(vAssign.source.toString())));
+        String source = registerMap.get(vAssign.source.toString());
+        if (source == null)
+            source = vAssign.source.toString();
+        printer.println(String.format("%s = %s", registerMap.get(vAssign.dest.toString()), source));
     }
 
     @Override
@@ -165,6 +183,8 @@ public class V2VM extends VInstr.Visitor<Throwable> {
     public void visit(VReturn vReturn) throws Throwable {
         if (vReturn.value != null)
             printer.println(String.format("$v0 = %s", registerMap.get(vReturn.value.toString())));
+        for (int i = 0; registerMapBuilder.containsKey(String.format("$s%d", i)); i++)
+            printer.println(String.format("local[%d] = $s%d", i, i));
         printer.println("ret");
     }
 }

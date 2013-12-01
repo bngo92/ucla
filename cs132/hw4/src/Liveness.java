@@ -16,6 +16,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
     public static class Thing {
         public final String var;
         public final Range range;
+        public boolean crossCall;
         public Thing(String var, int start) {
             this.var = var;
             this.range = new Range(start);
