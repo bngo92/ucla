@@ -186,13 +186,17 @@ public class V2VM extends VInstr.Visitor<Throwable> {
         String source = registerMap.get(vMemWrite.source.toString());
         if (source == null)
             source = vMemWrite.source.toString();
-        printer.println(String.format("[%s] = %s", registerMap.get(((VMemRef.Global) vMemWrite.dest).base.toString()), source));
+        VMemRef.Global dest = (VMemRef.Global) vMemWrite.dest;
+        if (dest.byteOffset == 0)
+            printer.println(String.format("[%s] = %s", registerMap.get(dest.base.toString()), source));
+        else
+            printer.println(String.format("[%s+%d] = %s", registerMap.get(dest.base.toString()), dest.byteOffset, source));
     }
 
     @Override
     public void visit(VMemRead vMemRead) throws Throwable {
         VMemRef.Global source = (VMemRef.Global) vMemRead.source;
-        if (((VMemRef.Global) vMemRead.source).byteOffset == 0)
+        if (source.byteOffset == 0)
             printer.println(String.format("%s = [%s]", registerMap.get(vMemRead.dest.toString()), registerMap.get(source.base.toString())));
         else
             printer.println(String.format("%s = [%s+%d]", registerMap.get(vMemRead.dest.toString()), registerMap.get(source.base.toString()), source.byteOffset));
