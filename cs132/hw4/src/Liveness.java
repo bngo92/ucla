@@ -194,8 +194,10 @@ public class Liveness extends VInstr.Visitor<Throwable> {
     public void visit(VBranch vBranch) throws Throwable {
         for (Thing thing : things.values()) {
             System.err.println(thing.labels);
-            if (thing.labels.contains(vBranch.target.toString()))
+            if (thing.labels.contains(vBranch.target.toString().substring(1))) {
+                System.err.println(thing.var);
                 thing.range.end = vBranch.sourcePos.line;
+            }
         }
 
         int line = vBranch.sourcePos.line;
