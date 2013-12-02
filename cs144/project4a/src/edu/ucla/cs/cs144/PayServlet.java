@@ -14,7 +14,7 @@ public class PayServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        if (session == null)
+        if (session == null || !request.isSecure())
             return;
         request.setAttribute("ItemID", session.getAttribute("ItemID"));
         request.setAttribute("ItemName", session.getAttribute("ItemName"));
@@ -24,7 +24,7 @@ public class PayServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        if (session == null)
+        if (session == null || !request.isSecure())
             return;
         request.setAttribute("ItemID", session.getAttribute("ItemID"));
         request.setAttribute("ItemName", session.getAttribute("ItemName"));
