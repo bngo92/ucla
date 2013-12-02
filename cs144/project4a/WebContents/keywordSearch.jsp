@@ -2,7 +2,16 @@
 <html>
 <head>
     <title></title>
+    <meta name="viewport" content="width=device-width">
 </head>
+<style>
+    @media (max-width: 480px) {
+        html, body {
+            font-size: 24px;
+        }
+    }
+</style>
+
 <body>
 <script type="text/javascript" src="suggest.js"></script>
 <script type="text/javascript">
