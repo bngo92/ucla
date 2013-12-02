@@ -2,6 +2,7 @@
 <html>
 <head>
     <title></title>
+    <meta name="viewport" content="width=device-width">
     <script type="text/javascript"
         src="http://maps.google.com/maps/api/js?sensor=false">
     </script>
