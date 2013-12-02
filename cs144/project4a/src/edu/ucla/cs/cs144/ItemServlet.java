@@ -11,6 +11,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
@@ -116,8 +117,11 @@ public class ItemServlet extends HttpServlet implements Servlet {
         }
 
         Element item = doc.getDocumentElement();
-        request.setAttribute("Item_ID", item.getAttribute("ItemID"));
-        request.setAttribute("Item_Name", getElementTextByTagNameNR(item, "Name"));
+        String itemId = item.getAttribute("ItemID");
+        String itemName = getElementTextByTagNameNR(item, "Name");
+        String buyPrice = getElementTextByTagNameNR(item, "Buy_Price");
+        request.setAttribute("Item_ID", itemId);
+        request.setAttribute("Item_Name", itemName);
 
 
         Element[] categories = getElementsByTagNameNR(item, "Category");
@@ -133,7 +137,7 @@ public class ItemServlet extends HttpServlet implements Servlet {
         request.setAttribute("Seller_Rating", seller.getAttribute("Rating"));
         request.setAttribute("Seller_Location", getElementTextByTagNameNR(item, "Location"));
         request.setAttribute("Seller_Country", getElementTextByTagNameNR(item, "Country"));
-        request.setAttribute("Buy_Price", getElementTextByTagNameNR(item, "Buy_Price"));
+        request.setAttribute("Buy_Price", buyPrice);
         request.setAttribute("First_bid", getElementTextByTagNameNR(item, "First_Bid"));
         request.setAttribute("Currently", getElementTextByTagNameNR(item, "Currently"));
         request.setAttribute("Started", getElementTextByTagNameNR(item, "Started"));
@@ -180,6 +184,10 @@ public class ItemServlet extends HttpServlet implements Servlet {
 
         request.setAttribute("address", address);
 
+        HttpSession session = request.getSession(true);
+        session.setAttribute("ItemID", itemId);
+        session.setAttribute("ItemName", itemName);
+        session.setAttribute("Buy_Price", buyPrice);
         request.getRequestDispatcher("/getItem.jsp").forward(request, response);
     }
 }

@@ -23,6 +23,14 @@
         <servlet-name>ProxyServlet</servlet-name>
         <url-pattern>/suggest</url-pattern>
     </servlet-mapping>
+    <servlet>
+        <servlet-name>PayServlet</servlet-name>
+        <servlet-class>edu.ucla.cs.cs144.PayServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PayServlet</servlet-name>
+        <url-pattern>/pay</url-pattern>
+    </servlet-mapping>r
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>

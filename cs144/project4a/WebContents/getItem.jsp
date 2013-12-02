@@ -8,16 +8,16 @@
     <script type="text/javascript">
       function initialize() {
  	var latlng = new google.maps.LatLng(34.063509, -118.44541);
-        var myOptions = { 
+        var myOptions = {
 	  zoom: 0,
 	  center:latlng,
 	  mapTypeId: google.maps.MapTypeId.ROADMAP
-        }; 
+        };
 	var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-	
+
 	var geocoder = new google.maps.Geocoder();
 	var address = "<%=request.getAttribute("address") %>";
-	
+
 	geocoder.geocode({'address':address }, function(results,status) {
           if(status==google.maps.GeocoderStatus.OK) {
   	    map.setCenter(results[0].geometry.location);
@@ -26,7 +26,7 @@
 	} );
 
       }
-      
+
     </script>
 </head>
 <body onload="initialize()">
@@ -42,6 +42,10 @@
 <p>
 Currently: <%=request.getAttribute("Currently")%>
 <br>Buy Price: <%=request.getAttribute("Buy_Price")%>
+<%
+if (!request.getAttribute("Buy_Price").equals(""))
+out.println(String.format("<a href=\"https://%s:8443%s/pay\">Pay Now</a>", request.getServerName(), request.getContextPath()));
+%>
 <br>First Bid: <%=request.getAttribute("First_bid")%>
 <br>Open From: <%=request.getAttribute("Started")%> to <%=request.getAttribute("Ends")%>
 <p>
