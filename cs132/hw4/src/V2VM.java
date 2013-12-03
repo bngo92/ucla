@@ -149,7 +149,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
         if (source == null)
             source = vAssign.source.toString();
         String dest = registerMap.get(vAssign.dest.toString());
-        if (!dest.equals(""))
+        if (!dest.isEmpty())
             printer.println(String.format("%s = %s", dest, source));
     }
 
@@ -171,7 +171,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             addr = vCall.addr.toString();
         printer.println(String.format("call %s", addr));
         String dest = registerMap.get(vCall.dest.toString());
-        if (dest.equals(""))
+        if (dest.isEmpty())
             return;
         printer.println(String.format("%s = $v0", dest));
     }
