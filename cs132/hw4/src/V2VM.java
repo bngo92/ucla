@@ -5,7 +5,8 @@ import cs132.vapor.ast.*;
 import cs132.vapor.ast.VBuiltIn.Op;
 import cs132.vapor.parser.VaporParser;
 
-import java.io.*;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.*;
 
 
@@ -63,6 +64,10 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                     liveness.label = labels.pop().ident;
                 instr.accept(liveness);
             }
+
+            for (Liveness.Thing thing : liveness.things.values())
+                if (thing.range.start == thing.range.end)
+                    thing.var = "";
 
             CrossCall call = new CrossCall(liveness.things);
             for (VInstr instr : function.body)
@@ -161,7 +166,10 @@ public class V2VM extends VInstr.Visitor<Throwable> {
         if (addr == null)
             addr = vCall.addr.toString();
         printer.println(String.format("call %s", addr));
-        printer.println(String.format("%s = $v0", registerMap.get(vCall.dest.toString())));
+        String dest = registerMap.get(vCall.dest.toString());
+        if (dest.isEmpty())
+            return;
+        printer.println(String.format("%s = $v0", dest));
     }
 
     @Override
