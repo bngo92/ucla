@@ -211,7 +211,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
     @Override
     public void visit(VGoto vGoto) throws Throwable {
         for (Thing thing : things.values())
-            if (thing.labels.contains(vGoto.target.toString()))
+            if (thing.labels.contains(vGoto.target.toString().substring(1)))
                 thing.range.end = vGoto.sourcePos.line;
     }
 
