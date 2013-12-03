@@ -76,8 +76,6 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             for (Liveness.Thing thing : liveness.things.values()) {
                 if (thing.crossCall) {
                     String register = String.format("$s%d", s++);
-                    if (thing.range.start == thing.range.end)
-                        register = "";
                     registerMap.put(thing.var, register);
                     registerMapBuilder.put(register, null);
                     continue;
