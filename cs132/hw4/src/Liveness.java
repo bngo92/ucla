@@ -55,7 +55,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         if (isVar(vAssign.source)) {
             String in = vAssign.source.toString();
             Thing thing = things.get(in);
-            thing.updateRange(line);
+            thing.range.end = line;
             if (label != null)
                 thing.labels.add(label);
         }
@@ -85,7 +85,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
             if (out.equals(in))
                 coalesce = true;
 
-            thing.updateRange(line);
+            thing.range.end = line;
             if (label != null)
                 thing.labels.add(label);
         }
@@ -95,7 +95,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         if (thing != null) {
             if (out.equals(in))
                 coalesce = true;
-            thing.updateRange(line);
+            thing.range.end = line;
         }
 
         if (!coalesce) {
@@ -135,7 +135,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
             if (in.equals(out))
                 coalesce = true;
 
-            thing.updateRange(line);
+            thing.range.end = line;
             if (label != null)
                 thing.labels.add(label);
         }
@@ -158,7 +158,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         if (isVar(vMemWrite.source)) {
             String in = vMemWrite.source.toString();
             Thing thing = things.get(in);
-            thing.updateRange(line);
+            thing.range.end = line;
             if (label != null)
                 thing.labels.add(label);
         }
@@ -182,7 +182,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         if (isVar(vMemRead.source)) {
             String in = ((VMemRef.Global) vMemRead.source).base.toString();
             Thing thing = things.get(in);
-            thing.updateRange(line);
+            thing.range.end = line;
             if (label != null)
                 thing.labels.add(label);
         }
@@ -210,7 +210,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
 
         String in = vBranch.value.toString();
         Thing thing = things.get(in);
-        thing.updateRange(line);
+        thing.range.end = line;
     }
 
     @Override
@@ -227,7 +227,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         if (isVar(vReturn.value)) {
             String in = vReturn.value.toString();
             Thing thing = things.get(in);
-            thing.updateRange(line);
+            thing.range.end = line;
         }
     }
 }
