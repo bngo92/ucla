@@ -117,7 +117,9 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
             for (int i = 0; i < function.params.length; i++) {
                 String register = registerMap.get(function.params[i].toString());
-                if (i < 4)
+                if (register.isEmpty())
+                    continue;
+                else if (i < 4)
                     printer.println(String.format("%s = $a%d", register, i));
                 else
                     printer.println(String.format("%s = in[%d]", register, i - 4));
