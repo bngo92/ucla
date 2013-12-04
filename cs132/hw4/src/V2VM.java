@@ -121,11 +121,10 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             Collections.addAll(labels, function.labels);
             for (VInstr instr : function.body) {
                 line = instr.sourcePos.line;
-                if (!labels.isEmpty() && labels.peek().sourcePos.line < line) {
-                    printer.dedent();
+                printer.dedent();
+                while (!labels.isEmpty() && labels.peek().sourcePos.line < line)
                     printer.println(String.format("%s:", labels.pop().ident));
-                    printer.indent();
-                }
+                printer.indent();
                 instr.accept(new V2VM());
             }
 
