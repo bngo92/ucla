@@ -83,7 +83,12 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                     continue;
                 }
 
-                String register = String.format("$t%d", last);
+                String register;
+                if (last < 9) {
+                    register = String.format("$t%d", last);
+                } else {
+                    register = String.format("$t%d", last - 9);
+                }
                 Liveness.Thing saved = registerMapBuilder.get(register);
                 if (saved == null || thing.range.start >= saved.range.end) {
                     registerMap.put(thing.var, register);
