@@ -61,7 +61,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 line = instr.sourcePos.line;
                 while (!labels.isEmpty() && labels.peek().sourcePos.line < line) {
                     String label = labels.pop().ident;
-                    if (label.contains("if") || label.contains("while"))
+                    if (!label.contains("bounds") && !label.contains("null"))
                         liveness.label = label;
                 }
                 instr.accept(liveness);
