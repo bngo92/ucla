@@ -79,7 +79,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 if (thing.crossCall) {
                     String register = String.format("$s%d", s++);
                     registerMap.put(thing.var, register);
-                    registerMapBuilder.put(register, null);
+                    registerMapBuilder.put(register, thing);
                     continue;
                 }
 
@@ -91,14 +91,25 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                     continue;
                 }
 
-                for (int i = 0; i < 9; i++) {
-                    register = String.format("$t%d", i);
-                    saved = registerMapBuilder.get(register);
-                    if (saved == null || thing.range.start >= saved.range.end) {
-                        registerMap.put(thing.var, register);
-                        registerMapBuilder.put(register, thing);
-                        last = i;
-                        break;
+                for (int i = 0; i < 17; i++) {
+                    if (i < 9) {
+                        register = String.format("$t%d", i);
+                        saved = registerMapBuilder.get(register);
+                        if (saved == null || thing.range.start >= saved.range.end) {
+                            registerMap.put(thing.var, register);
+                            registerMapBuilder.put(register, thing);
+                            last = i;
+                            break;
+                        }
+                    } else {
+                        register = String.format("$s%d", i - 9);
+                        saved = registerMapBuilder.get(register);
+                        if (saved == null || thing.range.start >= saved.range.end) {
+                            registerMap.put(thing.var, register);
+                            registerMapBuilder.put(register, thing);
+                            last = i;
+                            break;
+                        }
                     }
                 }
             }
