@@ -9,11 +9,67 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     public int out;
     public int savedRegisters;
     private String label;
+    private static HashMap<VarRef, String> registers = new HashMap<VarRef, String>();
+    private static LinkedHashSet<String> freeRegisters = new LinkedHashSet<String>();
+    static {
+        freeRegisters.addAll(Arrays.asList("t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "s1", "s2", "s3", "s4", "s5", "s6", "s7"));
+    }
+
+    private TreeSet<VarRef> active;
+    private HashMap<VarRef, Integer> locations;
 
     public LivenessAnalysis(VFunction function) throws Throwable {
         this.function = function;
         this.label = null;
         this.varRefs = new LinkedHashMap<String, VarRef>();
+    }
+
+    public HashMap<String, String> getRegisters() {
+        allocateRegisters();
+        HashMap<String, String> ret = new HashMap<String, String>();
+        for (Map.Entry<VarRef, String> entry : registers.entrySet())
+            ret.put(entry.getKey().var, entry.getValue());
+        return ret;
+    }
+
+    private void allocateRegisters() {
+        TreeSet<VarRef> liveIntervals = new TreeSet<VarRef>(new SortStart());
+        for (VarRef varRef : varRefs.values())
+            liveIntervals.add(varRef);
+
+        active = new TreeSet<VarRef>(new SortEnd());
+        for (VarRef varRef : liveIntervals) {
+            expireOldIntervals(varRef);
+            if (active.size() == freeRegisters.size()) {
+                spillAtInterval(varRef);
+            } else {
+                String register = freeRegisters.iterator().next();
+                registers.put(varRef, register);
+                freeRegisters.remove(register);
+                active.add(varRef);
+            }
+        }
+    }
+
+    private void expireOldIntervals(VarRef i) {
+        for (VarRef j : active) {
+            if (j.range.end >= i.range.start)
+                return;
+            active.remove(j);
+            freeRegisters.add(registers.get(j));
+        }
+    }
+
+    private void spillAtInterval(VarRef i) {
+        VarRef spill = active.last();
+        if (spill.range.end > i.range.end) {
+            registers.put(i, registers.get(spill));
+            locations.put(spill, savedRegisters++);
+            active.remove(spill);
+            active.add(i);
+        } else {
+            locations.put(i, savedRegisters++);
+        }
     }
 
     public void analyze() throws Throwable {
@@ -302,6 +358,28 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             this.var = var;
             this.range = new Range(start);
             labels = new HashSet<String>();
+        }
+    }
+
+    public class SortStart implements Comparator<VarRef> {
+        public int compare(VarRef r1, VarRef r2) {
+            if (r1.range.start < r2.range.start)
+                return -1;
+            else if (r1.range.start > r2.range.start)
+                return 1;
+            else
+                return 0;
+        }
+    }
+
+    public class SortEnd implements Comparator<VarRef> {
+        public int compare(VarRef r1, VarRef r2) {
+            if (r1.range.end < r2.range.end)
+                return -1;
+            else if (r1.range.end > r2.range.end)
+                return 1;
+            else
+                return 0;
         }
     }
 }

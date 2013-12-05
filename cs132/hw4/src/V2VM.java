@@ -12,7 +12,7 @@ import java.util.*;
 public class V2VM extends VInstr.Visitor<Throwable> {
 
     private static IndentPrinter printer;
-    private static LinkedHashMap<String,String> registerMap;
+    private static HashMap<String, String> registerMap;
 
     public static void main(String[] args)
             throws Throwable {
@@ -26,7 +26,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
         VaporProgram program = null;
         try {
-            program = VaporParser.run(new InputStreamReader(System.in), 1, 1,
+            program = VaporParser.run(new InputStreamReader(new FileInputStream("LinearSearch.vapor")), 1, 1,
                     java.util.Arrays.asList(ops),
                     allowLocals, registers, allowStack);
         } catch (ProblemException ex) {
@@ -49,7 +49,8 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             LivenessAnalysis livenessAnalysis = new LivenessAnalysis(function);
             livenessAnalysis.analyze();
             livenessAnalysis.crossCall();
-            registerMap = livenessAnalysis.getRegisterMap();
+            registerMap = livenessAnalysis.getRegisters();
+            //registerMap = livenessAnalysis.getRegisterMap();
 
             int in = function.params.length;
             printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, (in < 4) ? 0 : in - 4,
