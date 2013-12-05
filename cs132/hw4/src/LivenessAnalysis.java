@@ -68,8 +68,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
 
     private void allocateRegisters() {
         TreeSet<VarRef> liveIntervals = new TreeSet<VarRef>(new SortStart());
-        for (VarRef varRef : varRefs.values())
-            liveIntervals.add(varRef);
+        liveIntervals.addAll(varRefs.values());
 
         active = new TreeSet<VarRef>(new SortEnd());
         for (VarRef varRef : liveIntervals) {
