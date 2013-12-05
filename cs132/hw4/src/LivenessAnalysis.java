@@ -8,7 +8,6 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     private final VFunction function;
     public int out;
     public int calleeRegisterCount;
-    private String label = null;
     private HashMap<VarRef, String> registers = new HashMap<VarRef, String>();
     private LinkedList<String> calleeRegisters = new LinkedList<String>();
     private LinkedList<String> callerRegisters = new LinkedList<String>();
@@ -121,8 +120,8 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             line = instr.sourcePos.line;
             while (!labels.isEmpty() && labels.peek().sourcePos.line < line) {
                 String label = labels.pop().ident;
-                if (!label.contains("bounds") && !label.contains("null"))
-                    this.label = label;
+                for (VarRef varRef : varRefs.values())
+                    varRef.labels.add(label);
             }
             instr.accept(this);
         }
@@ -132,57 +131,6 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         CrossCall call = new CrossCall(varRefs);
         for (VInstr instr : function.body)
             instr.accept(call);
-    }
-
-    public LinkedHashMap<String, String> getRegisterMap() {
-        LinkedHashMap<String,String> registerMap = new LinkedHashMap<String, String>();
-        HashMap<String, VarRef> registerMapBuilder = new HashMap<String, VarRef>();
-        int last = 0;
-        calleeRegisterCount = 0;
-        for (LivenessAnalysis.VarRef varRef : varRefs.values()) {
-            if (varRef.crossCall) {
-                String register = String.format("$s%d", calleeRegisterCount++);
-                registerMap.put(varRef.var, register);
-                registerMapBuilder.put(register, varRef);
-                continue;
-            }
-
-            String register;
-            if (last < 9) {
-                register = String.format("$t%d", last);
-            } else {
-                register = String.format("$s%d", last - 9);
-            }
-            LivenessAnalysis.VarRef saved = registerMapBuilder.get(register);
-            if (saved == null || varRef.range.start >= saved.range.end) {
-                registerMap.put(varRef.var, register);
-                registerMapBuilder.put(register, varRef);
-                continue;
-            }
-
-            for (int i = 0; i < 17; i++) {
-                if (i < 9) {
-                    register = String.format("$t%d", i);
-                    saved = registerMapBuilder.get(register);
-                    if (saved == null || varRef.range.start >= saved.range.end) {
-                        registerMap.put(varRef.var, register);
-                        registerMapBuilder.put(register, varRef);
-                        last = i;
-                        break;
-                    }
-                } else {
-                    register = String.format("$s%d", i - 9);
-                    saved = registerMapBuilder.get(register);
-                    if (saved == null || varRef.range.start >= saved.range.end) {
-                        registerMap.put(varRef.var, register);
-                        registerMapBuilder.put(register, varRef);
-                        last = i;
-                        break;
-                    }
-                }
-            }
-        }
-        return registerMap;
     }
 
     private boolean isVar(VOperand operand) {
@@ -200,9 +148,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         if (isVar(vAssign.source)) {
             String in = vAssign.source.toString();
             VarRef varRef = varRefs.get(in);
-            varRef.range.end = line;
-            if (label != null)
-                varRef.labels.add(label);
+            varRef.read(line);
         }
 
         String out = vAssign.dest.toString();
@@ -211,7 +157,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             varRef = new VarRef(out, line);
             varRefs.put(out, varRef);
         } else {
-            varRef.range.end = line;
+            varRef.write(line);
         }
     }
 
@@ -229,10 +175,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             VarRef varRef = varRefs.get(in);
             if (out.equals(in))
                 coalesce = true;
-
-            varRef.range.end = line;
-            if (label != null)
-                varRef.labels.add(label);
+            varRef.read(line);
         }
 
         String in = vCall.addr.toString();
@@ -240,7 +183,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         if (varRef != null) {
             if (out.equals(in))
                 coalesce = true;
-            varRef.range.end = line;
+            varRef.read(line);
         }
 
         if (!coalesce) {
@@ -249,7 +192,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
                 varRef = new VarRef(out, line);
                 varRefs.put(out, varRef);
             } else {
-                varRef.range.end = line;
+                varRef.read(line);
             }
         }
 
@@ -279,10 +222,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             VarRef varRef = varRefs.get(in);
             if (in.equals(out))
                 coalesce = true;
-
-            varRef.range.end = line;
-            if (label != null)
-                varRef.labels.add(label);
+            varRef.read(line);
         }
 
         if (!coalesce) {
@@ -291,7 +231,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
                 varRef = new VarRef(out, line);
                 varRefs.put(out, varRef);
             } else {
-                varRef.range.end = line;
+                varRef.write(line);
             }
         }
     }
@@ -303,9 +243,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         if (isVar(vMemWrite.source)) {
             String in = vMemWrite.source.toString();
             VarRef varRef = varRefs.get(in);
-            varRef.range.end = line;
-            if (label != null)
-                varRef.labels.add(label);
+            varRef.read(line);
         }
 
         String out;
@@ -315,9 +253,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             throw new Throwable();
 
         VarRef varRef = varRefs.get(out);
-        varRef.range.end = line;
-        if (label != null)
-            varRef.labels.add(label);
+        varRef.read(line);
     }
 
     @Override
@@ -327,9 +263,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         if (isVar(vMemRead.source)) {
             String in = ((VMemRef.Global) vMemRead.source).base.toString();
             VarRef varRef = varRefs.get(in);
-            varRef.range.end = line;
-            if (label != null)
-                varRef.labels.add(label);
+            varRef.read(line);
         }
 
         if (isVar(vMemRead.dest)) {
@@ -339,7 +273,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
                 varRef = new VarRef(out, line);
                 varRefs.put(out, varRef);
             } else {
-                varRef.range.end = line;
+                varRef.write(line);
             }
         }
     }
@@ -347,7 +281,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     @Override
     public void visit(VBranch vBranch) throws Throwable {
         for (VarRef varRef : varRefs.values()) {
-            if (varRef.labels.contains(vBranch.target.toString().substring(1)))
+            if (varRef.readLabels.contains(vBranch.target.toString().substring(1)))
                 varRef.range.end = vBranch.sourcePos.line;
         }
 
@@ -355,13 +289,13 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
 
         String in = vBranch.value.toString();
         VarRef varRef = varRefs.get(in);
-        varRef.range.end = line;
+        varRef.read(line);
     }
 
     @Override
     public void visit(VGoto vGoto) throws Throwable {
         for (VarRef varRef : varRefs.values())
-            if (varRef.labels.contains(vGoto.target.toString().substring(1)))
+            if (varRef.readLabels.contains(vGoto.target.toString().substring(1)))
                 varRef.range.end = vGoto.sourcePos.line;
     }
 
@@ -372,7 +306,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         if (isVar(vReturn.value)) {
             String in = vReturn.value.toString();
             VarRef varRef = varRefs.get(in);
-            varRef.range.end = line;
+            varRef.read(line);
         }
     }
 
@@ -389,11 +323,22 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         public final String var;
         public final Range range;
         public final HashSet<String> labels;
+        public final HashSet<String> readLabels;
         public boolean crossCall;
         public VarRef(String var, int start) {
             this.var = var;
             this.range = new Range(start);
-            labels = new HashSet<String>();
+            this.labels = new HashSet<String>();
+            this.readLabels = new HashSet<String>();
+        }
+        public void read(int line) {
+            range.end = line;
+            readLabels.addAll(labels);
+            labels.clear();
+        }
+        public void write(int line) {
+            range.end = line;
+            labels.clear();
         }
     }
 
