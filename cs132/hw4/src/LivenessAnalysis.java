@@ -127,12 +127,6 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         }
     }
 
-    public void crossCall() throws Throwable {
-        CrossCall call = new CrossCall(varRefs);
-        for (VInstr instr : function.body)
-            instr.accept(call);
-    }
-
     private boolean isVar(VOperand operand) {
         return operand instanceof VVarRef.Local;
     }
@@ -185,6 +179,9 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
                 coalesce = true;
             varRef.read(line);
         }
+
+        for (VarRef v : varRefs.values())
+            v.call = true;
 
         if (!coalesce) {
             varRef = varRefs.get(out);
@@ -324,21 +321,27 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         public final Range range;
         public final HashSet<String> labels;
         public final HashSet<String> readLabels;
+        public boolean call;
         public boolean crossCall;
         public VarRef(String var, int start) {
             this.var = var;
             this.range = new Range(start);
             this.labels = new HashSet<String>();
             this.readLabels = new HashSet<String>();
+            this.call = false;
+            this.crossCall = false;
         }
         public void read(int line) {
             range.end = line;
             readLabels.addAll(labels);
             labels.clear();
+            if (call)
+                crossCall = true;
         }
         public void write(int line) {
             range.end = line;
             labels.clear();
+            call = false;
         }
     }
 
