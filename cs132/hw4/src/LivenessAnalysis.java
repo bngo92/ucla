@@ -403,10 +403,6 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
                 return -1;
             else if (r1.range.start > r2.range.start)
                 return 1;
-            else if (r1.range.end < r2.range.end)
-                return -1;
-            else if (r1.range.end > r2.range.end)
-                return 1;
             else
                 return 0;
         }
@@ -417,10 +413,6 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             if (r1.range.end < r2.range.end)
                 return -1;
             else if (r1.range.end > r2.range.end)
-                return 1;
-            else if (r1.range.start < r2.range.start)
-                return -1;
-            else if (r1.range.start > r2.range.start)
                 return 1;
             else
                 return 0;
