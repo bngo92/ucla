@@ -66,9 +66,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
             for (int i = 0; i < function.params.length; i++) {
                 String register = registerMap.get(function.params[i].toString());
-                if (register == null)
-                    continue;
-                else if (i < 4)
+                if (i < 4)
                     printer.println(String.format("%s = $a%d", register, i));
                 else
                     printer.println(String.format("%s = in[%d]", register, i - 4));
@@ -96,8 +94,9 @@ public class V2VM extends VInstr.Visitor<Throwable> {
     @Override
     public void visit(VAssign vAssign) throws Throwable {
         String source = registerMap.get(vAssign.source.toString());
-        if (source != null)
-            printer.println(String.format("%s = %s", registerMap.get(vAssign.dest.toString()), source));
+        if (source == null)
+            source = vAssign.source.toString();
+        printer.println(String.format("%s = %s", registerMap.get(vAssign.dest.toString()), source));
     }
 
     @Override
@@ -117,9 +116,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
         if (addr == null)
             addr = vCall.addr.toString();
         printer.println(String.format("call %s", addr));
-        String ret = registerMap.get(vCall.dest.toString());
-        if (ret != null)
-            printer.println(String.format("%s = $v0", ret));
+        printer.println(String.format("%s = $v0", registerMap.get(vCall.dest.toString())));
     }
 
     @Override
