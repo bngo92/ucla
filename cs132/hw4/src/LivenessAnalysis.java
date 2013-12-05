@@ -37,12 +37,28 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
 
     private String getFreeRegister(boolean callee) {
         String ret;
+        if (callee) {
+            Iterator<String> iterator = freeRegisters.iterator();
+            while (iterator.hasNext()) {
+                ret = iterator.next();
+                if (ret.charAt(1) == 's') {
+                    iterator.remove();
+                    return ret;
+                }
+            }
+
+            calleeRegisterCount++;
+            ret = calleeRegisters.getFirst();
+            callerRegisters.removeFirst();
+            return ret;
+        }
+
         Iterator<String> iterator = freeRegisters.iterator();
         if (iterator.hasNext()) {
             ret = iterator.next();
             freeRegisters.remove(ret);
         } else {
-            if (callee || callerRegisters.isEmpty()) {
+            if (callerRegisters.isEmpty()) {
                 calleeRegisterCount++;
                 ret = calleeRegisters.getFirst();
                 callerRegisters.removeFirst();
