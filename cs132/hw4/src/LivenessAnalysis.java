@@ -278,8 +278,11 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     @Override
     public void visit(VBranch vBranch) throws Throwable {
         for (VarRef varRef : varRefs.values()) {
-            if (varRef.readLabels.contains(vBranch.target.toString().substring(1)))
+            if (varRef.readLabels.contains(vBranch.target.toString().substring(1))) {
                 varRef.range.end = vBranch.sourcePos.line;
+                if (varRef.call)
+                    varRef.crossCall = true;
+            }
         }
 
         int line = vBranch.sourcePos.line;
@@ -291,9 +294,13 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
 
     @Override
     public void visit(VGoto vGoto) throws Throwable {
-        for (VarRef varRef : varRefs.values())
-            if (varRef.readLabels.contains(vGoto.target.toString().substring(1)))
+        for (VarRef varRef : varRefs.values()) {
+            if (varRef.readLabels.contains(vGoto.target.toString().substring(1))) {
                 varRef.range.end = vGoto.sourcePos.line;
+                if (varRef.call)
+                    varRef.crossCall = true;
+            }
+        }
     }
 
     @Override
