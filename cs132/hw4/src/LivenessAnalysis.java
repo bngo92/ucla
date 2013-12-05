@@ -15,7 +15,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     private LinkedList<String> freeRegisters = new LinkedList<String>();
 
     private LinkedList<VarRef> active;
-    private HashMap<VarRef, Integer> locations;
+    private HashMap<VarRef, String> locations = new HashMap<VarRef, String>();
 
     public LivenessAnalysis(VFunction function) throws Throwable {
         this.function = function;
@@ -27,6 +27,8 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         allocateRegisters();
         HashMap<String, String> ret = new HashMap<String, String>();
         for (Map.Entry<VarRef, String> entry : registers.entrySet())
+            ret.put(entry.getKey().var, entry.getValue());
+        for (Map.Entry<VarRef, String> entry : locations.entrySet())
             ret.put(entry.getKey().var, entry.getValue());
         return ret;
     }
@@ -97,12 +99,12 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         VarRef spill = active.getLast();
         if (spill.range.end > i.range.end) {
             registers.put(i, registers.get(spill));
-            locations.put(spill, calleeRegisterCount++);
+            locations.put(spill, String.format("local[%d]", calleeRegisterCount++));
             active.remove(spill);
             active.add(i);
             Collections.sort(active, new SortEnd());
         } else {
-            locations.put(i, calleeRegisterCount++);
+            locations.put(i, String.format("local[%d]", calleeRegisterCount++));
         }
     }
 
