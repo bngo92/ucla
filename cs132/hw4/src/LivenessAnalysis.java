@@ -12,9 +12,9 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     private HashMap<VarRef, String> registers = new HashMap<VarRef, String>();
     private LinkedList<String> calleeRegisters = new LinkedList<String>();
     private LinkedList<String> callerRegisters = new LinkedList<String>();
-    private LinkedHashSet<String> freeRegisters = new LinkedHashSet<String>();
+    private LinkedList<String> freeRegisters = new LinkedList<String>();
 
-    private TreeSet<VarRef> active;
+    private LinkedList<VarRef> active;
     private HashMap<VarRef, Integer> locations;
 
     public LivenessAnalysis(VFunction function) throws Throwable {
@@ -67,10 +67,9 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     }
 
     private void allocateRegisters() {
-        TreeSet<VarRef> liveIntervals = new TreeSet<VarRef>(new SortStart());
-        liveIntervals.addAll(varRefs.values());
-
-        active = new TreeSet<VarRef>(new SortEnd());
+        active = new LinkedList<VarRef>();
+        LinkedList<VarRef> liveIntervals = new LinkedList<VarRef>(varRefs.values());
+        Collections.sort(liveIntervals, new SortStart());
         for (VarRef varRef : liveIntervals) {
             expireOldIntervals(varRef);
             if (active.size() == 17) {
@@ -83,6 +82,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     }
 
     private void expireOldIntervals(VarRef i) {
+        Collections.sort(active, new SortEnd());
         Iterator<VarRef> iterator = active.iterator();
         while (iterator.hasNext()) {
             VarRef j = iterator.next();
@@ -94,12 +94,13 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     }
 
     private void spillAtInterval(VarRef i) {
-        VarRef spill = active.last();
+        VarRef spill = active.getLast();
         if (spill.range.end > i.range.end) {
             registers.put(i, registers.get(spill));
             locations.put(spill, calleeRegisterCount++);
             active.remove(spill);
             active.add(i);
+            Collections.sort(active, new SortEnd());
         } else {
             locations.put(i, calleeRegisterCount++);
         }
