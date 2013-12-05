@@ -173,7 +173,10 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 value = vReturn.value.toString();
             printer.println(String.format("$v0 = %s", value));
         }
-        for (int i = 0; registerMap.containsKey(String.format("$s%d", i)); i++)
+
+        HashSet<String> locals = new HashSet<String>();
+        locals.addAll(registerMap.values());
+        for (int i = 0; locals.contains(String.format("$s%d", i)); i++)
             printer.println(String.format("$s%d = local[%d]", i, i));
         printer.println("ret");
     }
