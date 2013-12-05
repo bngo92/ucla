@@ -2,13 +2,15 @@ import cs132.vapor.ast.*;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 
 public class Liveness extends VInstr.Visitor<Throwable> {
 
     public static class Range {
+        public Range() {}
         public Range(int start) {
             this.start = start;
-            this.end = start;
+            this.end = -1;
         }
         public int start;
         public int end;
@@ -17,17 +19,15 @@ public class Liveness extends VInstr.Visitor<Throwable> {
     public static class Thing {
         public String var;
         public final Range range;
+        public final LinkedList<Range> ranges;
         public boolean crossCall;
         public final HashSet<String> labels;
         public Thing(String var, int start) {
             this.var = var;
-            this.range = new Range(start);
+            range = new Range();
+            ranges = new LinkedList<Range>();
+            ranges.add(new Range(start));
             labels = new HashSet<String>();
-        }
-        public void updateRange(int line) {
-            if (range.start == range.end)
-                range.start = line;
-            range.end = line;
         }
     }
 
@@ -55,7 +55,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         if (isVar(vAssign.source)) {
             String in = vAssign.source.toString();
             Thing thing = things.get(in);
-            thing.range.end = line;
+            thing.ranges.getLast().end = line;
             if (label != null)
                 thing.labels.add(label);
         }
@@ -66,7 +66,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
             thing = new Thing(out, line);
             things.put(out, thing);
         } else {
-            thing.updateRange(line);
+            thing.ranges.push(new Range(line));
         }
     }
 
@@ -85,7 +85,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
             if (out.equals(in))
                 coalesce = true;
 
-            thing.range.end = line;
+            thing.ranges.getLast().end = line;
             if (label != null)
                 thing.labels.add(label);
         }
@@ -95,7 +95,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         if (thing != null) {
             if (out.equals(in))
                 coalesce = true;
-            thing.range.end = line;
+            thing.ranges.getLast().end = line;
         }
 
         if (!coalesce) {
@@ -104,7 +104,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
                 thing = new Thing(out, line);
                 things.put(out, thing);
             } else {
-                thing.updateRange(line);
+                thing.ranges.push(new Range(line));
             }
         }
 
@@ -135,7 +135,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
             if (in.equals(out))
                 coalesce = true;
 
-            thing.range.end = line;
+            thing.ranges.getLast().end = line;
             if (label != null)
                 thing.labels.add(label);
         }
@@ -146,7 +146,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
                 thing = new Thing(out, line);
                 things.put(out, thing);
             } else {
-                thing.updateRange(line);
+                thing.ranges.push(new Range(line));
             }
         }
     }
@@ -158,7 +158,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         if (isVar(vMemWrite.source)) {
             String in = vMemWrite.source.toString();
             Thing thing = things.get(in);
-            thing.range.end = line;
+            thing.ranges.getLast().end = line;
             if (label != null)
                 thing.labels.add(label);
         }
@@ -170,7 +170,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
             throw new Throwable();
 
         Thing thing = things.get(out);
-        thing.updateRange(line);
+        thing.ranges.push(new Range(line));
         if (label != null)
             thing.labels.add(label);
     }
@@ -182,7 +182,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         if (isVar(vMemRead.source)) {
             String in = ((VMemRef.Global) vMemRead.source).base.toString();
             Thing thing = things.get(in);
-            thing.range.end = line;
+            thing.ranges.getLast().end = line;
             if (label != null)
                 thing.labels.add(label);
         }
@@ -194,30 +194,29 @@ public class Liveness extends VInstr.Visitor<Throwable> {
                 thing = new Thing(out, line);
                 things.put(out, thing);
             } else {
-                thing.updateRange(line);
+                thing.ranges.push(new Range(line));
             }
         }
     }
 
     @Override
     public void visit(VBranch vBranch) throws Throwable {
-        for (Thing thing : things.values()) {
+        for (Thing thing : things.values())
             if (thing.labels.contains(vBranch.target.toString().substring(1)))
-                thing.range.end = vBranch.sourcePos.line;
-        }
+                thing.ranges.getLast().end = vBranch.sourcePos.line;
 
         int line = vBranch.sourcePos.line;
 
         String in = vBranch.value.toString();
         Thing thing = things.get(in);
-        thing.range.end = line;
+        thing.ranges.getLast().end = line;
     }
 
     @Override
     public void visit(VGoto vGoto) throws Throwable {
         for (Thing thing : things.values())
             if (thing.labels.contains(vGoto.target.toString().substring(1)))
-                thing.range.end = vGoto.sourcePos.line;
+                thing.ranges.getLast().end = vGoto.sourcePos.line;
     }
 
     @Override
@@ -227,7 +226,7 @@ public class Liveness extends VInstr.Visitor<Throwable> {
         if (isVar(vReturn.value)) {
             String in = vReturn.value.toString();
             Thing thing = things.get(in);
-            thing.range.end = line;
+            thing.ranges.getLast().end = line;
         }
     }
 }

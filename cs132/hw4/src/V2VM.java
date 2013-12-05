@@ -65,6 +65,13 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 instr.accept(liveness);
             }
 
+            for (Liveness.Thing thing : liveness.things.values()) {
+                thing.range.start = thing.ranges.getFirst().start;
+                thing.range.end = thing.ranges.getLast().end;
+                if (thing.range.end == -1)
+                    thing.range.end = thing.ranges.getFirst().start;
+            }
+
             CrossCall call = new CrossCall(liveness.things);
             for (VInstr instr : function.body)
                 instr.accept(call);
@@ -82,7 +89,14 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 }
 
                 String register = String.format("$t%d", last);
-                if (thing.range.start == thing.range.end)
+                boolean unused = true;
+                for (Liveness.Range range : thing.ranges) {
+                    if (range.end != -1) {
+                        unused = false;
+                        break;
+                    }
+                }
+                if (unused)
                     register = "";
                 Liveness.Thing saved = registerMapBuilder.get(register);
                 if (saved == null || thing.range.start >= saved.range.end) {
