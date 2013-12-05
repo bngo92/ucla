@@ -4,27 +4,23 @@ import java.util.*;
 
 public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
 
-    private final LinkedHashMap<String, VarRef> varRefs;
+    private final LinkedHashMap<String, VarRef> varRefs = new LinkedHashMap<String, VarRef>();
     private final VFunction function;
     public int out;
     public int calleeRegisterCount;
-    private String label;
-    private static HashMap<VarRef, String> registers = new HashMap<VarRef, String>();
-    private static LinkedList<String> calleeRegisters = new LinkedList<String>();
-    private static LinkedList<String> callerRegisters = new LinkedList<String>();
-    private static LinkedHashSet<String> freeRegisters = new LinkedHashSet<String>();
-    static {
-        calleeRegisters.addAll(Arrays.asList("$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7"));
-        callerRegisters.addAll(Arrays.asList("$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$t8"));
-    }
+    private String label = null;
+    private HashMap<VarRef, String> registers = new HashMap<VarRef, String>();
+    private LinkedList<String> calleeRegisters = new LinkedList<String>();
+    private LinkedList<String> callerRegisters = new LinkedList<String>();
+    private LinkedHashSet<String> freeRegisters = new LinkedHashSet<String>();
 
     private TreeSet<VarRef> active;
     private HashMap<VarRef, Integer> locations;
 
     public LivenessAnalysis(VFunction function) throws Throwable {
         this.function = function;
-        this.label = null;
-        this.varRefs = new LinkedHashMap<String, VarRef>();
+        calleeRegisters.addAll(Arrays.asList("$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7"));
+        callerRegisters.addAll(Arrays.asList("$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$t8"));
     }
 
     public HashMap<String, String> getRegisters() {
