@@ -12,7 +12,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     private static HashMap<VarRef, String> registers = new HashMap<VarRef, String>();
     private static LinkedHashSet<String> freeRegisters = new LinkedHashSet<String>();
     static {
-        freeRegisters.addAll(Arrays.asList("t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "s1", "s2", "s3", "s4", "s5", "s6", "s7"));
+        freeRegisters.addAll(Arrays.asList("$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$t8", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7"));
     }
 
     private TreeSet<VarRef> active;
