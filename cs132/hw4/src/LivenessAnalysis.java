@@ -73,7 +73,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         Collections.sort(liveIntervals, new SortStart());
         for (VarRef varRef : liveIntervals) {
             expireOldIntervals(varRef);
-            if (active.size() == 17) {
+            if (active.size() == 17 || (varRef.crossCall && calleeRegisters.isEmpty())) {
                 spillAtInterval(varRef);
             } else {
                 registers.put(varRef, getFreeRegister(varRef.crossCall));
