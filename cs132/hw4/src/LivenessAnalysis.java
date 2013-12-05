@@ -7,12 +7,15 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     private final LinkedHashMap<String, VarRef> varRefs;
     private final VFunction function;
     public int out;
-    public int savedRegisters;
+    public int calleeRegisterCount;
     private String label;
     private static HashMap<VarRef, String> registers = new HashMap<VarRef, String>();
+    private static LinkedList<String> calleeRegisters = new LinkedList<String>();
+    private static LinkedList<String> callerRegisters = new LinkedList<String>();
     private static LinkedHashSet<String> freeRegisters = new LinkedHashSet<String>();
     static {
-        freeRegisters.addAll(Arrays.asList("$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$t8", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7"));
+        calleeRegisters.addAll(Arrays.asList("$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7"));
+        callerRegisters.addAll(Arrays.asList("$t8", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7"));
     }
 
     private TreeSet<VarRef> active;
@@ -32,6 +35,25 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         return ret;
     }
 
+    private String getFreeRegister(boolean callee) {
+        String ret;
+        Iterator<String> iterator = freeRegisters.iterator();
+        if (iterator.hasNext()) {
+            ret = iterator.next();
+            freeRegisters.remove(ret);
+        } else {
+            if (callee || callerRegisters.isEmpty()) {
+                calleeRegisterCount++;
+                ret = calleeRegisters.getFirst();
+                callerRegisters.removeFirst();
+            } else {
+                ret = callerRegisters.getFirst();
+                callerRegisters.removeFirst();
+            }
+        }
+        return ret;
+    }
+
     private void allocateRegisters() {
         TreeSet<VarRef> liveIntervals = new TreeSet<VarRef>(new SortStart());
         for (VarRef varRef : varRefs.values())
@@ -40,12 +62,10 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         active = new TreeSet<VarRef>(new SortEnd());
         for (VarRef varRef : liveIntervals) {
             expireOldIntervals(varRef);
-            if (active.size() == freeRegisters.size()) {
+            if (active.size() == 17) {
                 spillAtInterval(varRef);
             } else {
-                String register = freeRegisters.iterator().next();
-                registers.put(varRef, register);
-                freeRegisters.remove(register);
+                registers.put(varRef, getFreeRegister(varRef.crossCall));
                 active.add(varRef);
             }
         }
@@ -66,11 +86,11 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         VarRef spill = active.last();
         if (spill.range.end > i.range.end) {
             registers.put(i, registers.get(spill));
-            locations.put(spill, savedRegisters++);
+            locations.put(spill, calleeRegisterCount++);
             active.remove(spill);
             active.add(i);
         } else {
-            locations.put(i, savedRegisters++);
+            locations.put(i, calleeRegisterCount++);
         }
     }
 
@@ -104,10 +124,10 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         LinkedHashMap<String,String> registerMap = new LinkedHashMap<String, String>();
         HashMap<String, VarRef> registerMapBuilder = new HashMap<String, VarRef>();
         int last = 0;
-        savedRegisters = 0;
+        calleeRegisterCount = 0;
         for (LivenessAnalysis.VarRef varRef : varRefs.values()) {
             if (varRef.crossCall) {
-                String register = String.format("$s%d", savedRegisters++);
+                String register = String.format("$s%d", calleeRegisterCount++);
                 registerMap.put(varRef.var, register);
                 registerMapBuilder.put(register, varRef);
                 continue;

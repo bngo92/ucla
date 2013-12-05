@@ -54,10 +54,10 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
             int in = function.params.length;
             printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, (in < 4) ? 0 : in - 4,
-                    livenessAnalysis.out, livenessAnalysis.savedRegisters));
+                    livenessAnalysis.out, livenessAnalysis.calleeRegisterCount));
             printer.indent();
 
-            for (int i = 0; i < livenessAnalysis.savedRegisters; i++)
+            for (int i = 0; i < livenessAnalysis.calleeRegisterCount; i++)
                 printer.println(String.format("local[%d] = $s%d", i, i));
 
             for (int i = 0; i < function.params.length; i++) {
