@@ -58,7 +58,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             //registerMap = livenessAnalysis.getRegisterMap();
 
             int in = function.params.length;
-            out = livenessAnalysis.out;
+            out = livenessAnalysis.calleeRegisterCount;
             printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, (in < 4) ? 0 : in - 4,
                     out, livenessAnalysis.calleeRegisterCount));
             printer.indent();
