@@ -45,9 +45,8 @@ public class V2VM extends VInstr.Visitor<Throwable> {
         }
 
         for (VFunction function : program.functions) {
-
-            // Preallocate function arguments
             LivenessAnalysis livenessAnalysis = new LivenessAnalysis(function);
+            livenessAnalysis.analyze();
             livenessAnalysis.crossCall();
             registerMap = livenessAnalysis.getRegisterMap();
 

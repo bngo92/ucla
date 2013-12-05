@@ -5,22 +5,26 @@ import java.util.*;
 public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
 
     private final LinkedHashMap<String, VarRef> varRefs;
-    public int out;
-    private String label;
-    public int s;
     private final VFunction function;
+    public int out;
+    public int s;
+    private String label;
 
     public LivenessAnalysis(VFunction function) throws Throwable {
-        LinkedList<VCodeLabel> labels = new LinkedList<VCodeLabel>();
-        Collections.addAll(labels, function.labels);
         this.function = function;
-        label = null;
-        varRefs = new LinkedHashMap<String, VarRef>();
+        this.label = null;
+        this.varRefs = new LinkedHashMap<String, VarRef>();
+    }
+
+    public void analyze() throws Throwable {
         for (VVarRef varRef : function.params) {
             String var = varRef.toString();
             varRefs.put(var, new VarRef(var, varRef.sourcePos.line));
         }
+
         int line;
+        LinkedList<VCodeLabel> labels = new LinkedList<VCodeLabel>();
+        Collections.addAll(labels, function.labels);
         for (VInstr instr : function.body) {
             line = instr.sourcePos.line;
             while (!labels.isEmpty() && labels.peek().sourcePos.line < line) {
@@ -30,7 +34,6 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             }
             instr.accept(this);
         }
-
     }
 
     public void crossCall() throws Throwable {
