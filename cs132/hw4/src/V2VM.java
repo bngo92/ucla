@@ -44,20 +44,19 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             printer.println("");
         }
 
+        V2VM v2vm = new V2VM();
         for (VFunction function : program.functions) {
             LivenessAnalysis livenessAnalysis = new LivenessAnalysis(function);
             livenessAnalysis.analyze();
             livenessAnalysis.crossCall();
             registerMap = livenessAnalysis.getRegisterMap();
 
-            int in = function.params.length - 4;
-            if (in < 0)
-                in = 0;
-
-            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, in, livenessAnalysis.out, livenessAnalysis.s));
+            int in = function.params.length;
+            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, (in < 4) ? 0 : in - 4,
+                    livenessAnalysis.out, livenessAnalysis.savedRegisters));
             printer.indent();
 
-            for (int i = 0; i < livenessAnalysis.s; i++)
+            for (int i = 0; i < livenessAnalysis.savedRegisters; i++)
                 printer.println(String.format("local[%d] = $s%d", i, i));
 
             for (int i = 0; i < function.params.length; i++) {
@@ -77,7 +76,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 while (!labels.isEmpty() && labels.peek().sourcePos.line < line)
                     printer.println(String.format("%s:", labels.pop().ident));
                 printer.indent();
-                instr.accept(new V2VM());
+                instr.accept(v2vm);
             }
 
             printer.dedent();

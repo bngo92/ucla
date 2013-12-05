@@ -7,7 +7,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     private final LinkedHashMap<String, VarRef> varRefs;
     private final VFunction function;
     public int out;
-    public int s;
+    public int savedRegisters;
     private String label;
 
     public LivenessAnalysis(VFunction function) throws Throwable {
@@ -46,10 +46,10 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         LinkedHashMap<String,String> registerMap = new LinkedHashMap<String, String>();
         HashMap<String, VarRef> registerMapBuilder = new HashMap<String, VarRef>();
         int last = 0;
-        s = 0;
+        savedRegisters = 0;
         for (LivenessAnalysis.VarRef varRef : varRefs.values()) {
             if (varRef.crossCall) {
-                String register = String.format("$s%d", s++);
+                String register = String.format("$s%d", savedRegisters++);
                 registerMap.put(varRef.var, register);
                 registerMapBuilder.put(register, varRef);
                 continue;
