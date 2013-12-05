@@ -2,11 +2,11 @@ import cs132.vapor.ast.*;
 
 import java.util.LinkedHashMap;
 
-public class CrossCall extends VInstr.Visitor<Throwable> {
+class CrossCall extends VInstr.Visitor<Throwable> {
 
-    final LinkedHashMap<String, Liveness.Thing> registerMap;
+    private final LinkedHashMap<String, LivenessAnalysis.VarRef> registerMap;
 
-    public CrossCall (LinkedHashMap<String, Liveness.Thing> registerMap) {
+    public CrossCall (LinkedHashMap<String, LivenessAnalysis.VarRef> registerMap) {
         this.registerMap = registerMap;
     }
 
@@ -16,9 +16,9 @@ public class CrossCall extends VInstr.Visitor<Throwable> {
 
     @Override
     public void visit(VCall vCall) throws Throwable {
-        for (Liveness.Thing thing : registerMap.values())
-            if (thing.range.start < vCall.sourcePos.line && vCall.sourcePos.line < thing.range.end)
-                thing.crossCall = true;
+        for (LivenessAnalysis.VarRef varRef : registerMap.values())
+            if (varRef.range.start < vCall.sourcePos.line && vCall.sourcePos.line < varRef.range.end)
+                varRef.crossCall = true;
     }
 
     @Override

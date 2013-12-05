@@ -13,7 +13,6 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
     private static IndentPrinter printer;
     private static LinkedHashMap<String,String> registerMap;
-    private static HashMap<String,Liveness.Thing> registerMapBuilder;
 
     public static void main(String[] args)
             throws Throwable {
@@ -46,87 +45,20 @@ public class V2VM extends VInstr.Visitor<Throwable> {
         }
 
         for (VFunction function : program.functions) {
-            LinkedList<VCodeLabel> labels = new LinkedList<VCodeLabel>();
-            Collections.addAll(labels, function.labels);
 
             // Preallocate function arguments
-            Liveness liveness = new Liveness();
-            for (VVarRef varRef : function.params) {
-                String var = varRef.toString();
-                liveness.things.put(var, new Liveness.Thing(var, varRef.sourcePos.line));
-            }
-
-            int line;
-            for (VInstr instr : function.body) {
-                line = instr.sourcePos.line;
-                while (!labels.isEmpty() && labels.peek().sourcePos.line < line) {
-                    String label = labels.pop().ident;
-                    if (!label.contains("bounds") && !label.contains("null"))
-                        liveness.label = label;
-                }
-                instr.accept(liveness);
-            }
-
-            CrossCall call = new CrossCall(liveness.things);
-            for (VInstr instr : function.body)
-                instr.accept(call);
-
-            registerMap = new LinkedHashMap<String, String>();
-            registerMapBuilder = new HashMap<String, Liveness.Thing>();
-            int last = 0;
-            int s = 0;
-            for (Liveness.Thing thing : liveness.things.values()) {
-                if (thing.crossCall) {
-                    String register = String.format("$s%d", s++);
-                    registerMap.put(thing.var, register);
-                    registerMapBuilder.put(register, thing);
-                    continue;
-                }
-
-                String register;
-                if (last < 9) {
-                    register = String.format("$t%d", last);
-                } else {
-                    register = String.format("$s%d", last - 9);
-                }
-                Liveness.Thing saved = registerMapBuilder.get(register);
-                if (saved == null || thing.range.start >= saved.range.end) {
-                    registerMap.put(thing.var, register);
-                    registerMapBuilder.put(register, thing);
-                    continue;
-                }
-
-                for (int i = 0; i < 17; i++) {
-                    if (i < 9) {
-                        register = String.format("$t%d", i);
-                        saved = registerMapBuilder.get(register);
-                        if (saved == null || thing.range.start >= saved.range.end) {
-                            registerMap.put(thing.var, register);
-                            registerMapBuilder.put(register, thing);
-                            last = i;
-                            break;
-                        }
-                    } else {
-                        register = String.format("$s%d", i - 9);
-                        saved = registerMapBuilder.get(register);
-                        if (saved == null || thing.range.start >= saved.range.end) {
-                            registerMap.put(thing.var, register);
-                            registerMapBuilder.put(register, thing);
-                            last = i;
-                            break;
-                        }
-                    }
-                }
-            }
+            LivenessAnalysis livenessAnalysis = new LivenessAnalysis(function);
+            livenessAnalysis.crossCall();
+            registerMap = livenessAnalysis.getRegisterMap();
 
             int in = function.params.length - 4;
             if (in < 0)
                 in = 0;
 
-            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, in, liveness.out, s));
+            printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, in, livenessAnalysis.out, livenessAnalysis.s));
             printer.indent();
 
-            for (int i = 0; i < s; i++)
+            for (int i = 0; i < livenessAnalysis.s; i++)
                 printer.println(String.format("local[%d] = $s%d", i, i));
 
             for (int i = 0; i < function.params.length; i++) {
@@ -137,6 +69,8 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                     printer.println(String.format("%s = in[%d]", register, i - 4));
             }
 
+            int line;
+            LinkedList<VCodeLabel> labels = new LinkedList<VCodeLabel>();
             Collections.addAll(labels, function.labels);
             for (VInstr instr : function.body) {
                 line = instr.sourcePos.line;
@@ -241,7 +175,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
                 value = vReturn.value.toString();
             printer.println(String.format("$v0 = %s", value));
         }
-        for (int i = 0; registerMapBuilder.containsKey(String.format("$s%d", i)); i++)
+        for (int i = 0; registerMap.containsKey(String.format("$s%d", i)); i++)
             printer.println(String.format("$s%d = local[%d]", i, i));
         printer.println("ret");
     }
