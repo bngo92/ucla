@@ -125,12 +125,6 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             }
             instr.accept(this);
         }
-
-        for (Map.Entry<String, VarRef> varRefEntry : varRefs.entrySet()) {
-            Range range = varRefEntry.getValue().range;
-            if (range.start == range.end)
-                varRefs.remove(varRefEntry.getKey());
-        }
     }
 
     private boolean isVar(VOperand operand) {
