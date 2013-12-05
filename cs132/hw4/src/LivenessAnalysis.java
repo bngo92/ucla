@@ -61,7 +61,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             if (callerRegisters.isEmpty()) {
                 calleeRegisterCount++;
                 ret = calleeRegisters.getFirst();
-                callerRegisters.removeFirst();
+                calleeRegisters.removeFirst();
             } else {
                 ret = callerRegisters.getFirst();
                 callerRegisters.removeFirst();
