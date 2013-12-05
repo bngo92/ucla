@@ -181,7 +181,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             printer.println(String.format("$v0 = %s", value));
         }
 
-        for (int i = 0; i < locals; i++)
+        for (int i = 0; i < locals || i < 8; i++)
             printer.println(String.format("$s%d = local[%d]", i, i));
         printer.println("ret");
     }
