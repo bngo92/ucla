@@ -52,10 +52,12 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     }
 
     private void expireOldIntervals(VarRef i) {
-        for (VarRef j : active) {
+        Iterator<VarRef> iterator = active.iterator();
+        while (iterator.hasNext()) {
+            VarRef j = iterator.next();
             if (j.range.end >= i.range.start)
                 return;
-            active.remove(j);
+            iterator.remove();
             freeRegisters.add(registers.get(j));
         }
     }
