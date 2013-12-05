@@ -7,13 +7,17 @@ import cs132.vapor.parser.VaporParser;
 
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 
 public class V2VM extends VInstr.Visitor<Throwable> {
 
     private static IndentPrinter printer;
     private static HashMap<String, String> registerMap;
+    private static int out;
 
     public static void main(String[] args)
             throws Throwable {
@@ -54,8 +58,9 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             //registerMap = livenessAnalysis.getRegisterMap();
 
             int in = function.params.length;
+            out = livenessAnalysis.out;
             printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, (in < 4) ? 0 : in - 4,
-                    livenessAnalysis.out, livenessAnalysis.calleeRegisterCount));
+                    out, livenessAnalysis.calleeRegisterCount));
             printer.indent();
 
             for (int i = 0; i < livenessAnalysis.calleeRegisterCount; i++)
@@ -176,9 +181,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             printer.println(String.format("$v0 = %s", value));
         }
 
-        HashSet<String> locals = new HashSet<String>();
-        locals.addAll(registerMap.values());
-        for (int i = 0; locals.contains(String.format("$s%d", i)); i++)
+        for (int i = 0; i < out; i++)
             printer.println(String.format("$s%d = local[%d]", i, i));
         printer.println("ret");
     }
