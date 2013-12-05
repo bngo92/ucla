@@ -341,7 +341,6 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         public void write(int line) {
             range.end = line;
             labels.clear();
-            call = false;
         }
     }
 
