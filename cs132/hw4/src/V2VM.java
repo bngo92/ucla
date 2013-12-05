@@ -17,7 +17,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
 
     private static IndentPrinter printer;
     private static HashMap<String, String> registerMap;
-    private static int out;
+    private static int locals;
 
     public static void main(String[] args)
             throws Throwable {
@@ -58,12 +58,12 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             //registerMap = livenessAnalysis.getRegisterMap();
 
             int in = function.params.length;
-            out = livenessAnalysis.calleeRegisterCount;
+            locals = livenessAnalysis.calleeRegisterCount;
             printer.println(String.format("func %s [in %d, out %d, local %d]", function.ident, (in < 4) ? 0 : in - 4,
                     livenessAnalysis.out, livenessAnalysis.calleeRegisterCount));
             printer.indent();
 
-            for (int i = 0; i < livenessAnalysis.calleeRegisterCount; i++)
+            for (int i = 0; i < locals; i++)
                 printer.println(String.format("local[%d] = $s%d", i, i));
 
             for (int i = 0; i < function.params.length; i++) {
@@ -181,7 +181,7 @@ public class V2VM extends VInstr.Visitor<Throwable> {
             printer.println(String.format("$v0 = %s", value));
         }
 
-        for (int i = 0; i < out; i++)
+        for (int i = 0; i < locals; i++)
             printer.println(String.format("$s%d = local[%d]", i, i));
         printer.println("ret");
     }
