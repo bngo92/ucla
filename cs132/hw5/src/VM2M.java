@@ -1,0 +1,227 @@
+import cs132.util.IndentPrinter;
+import cs132.util.ProblemException;
+import cs132.util.StringUtil;
+import cs132.vapor.ast.*;
+import cs132.vapor.ast.VBuiltIn.Op;
+import cs132.vapor.parser.VaporParser;
+
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+
+
+public class VM2M extends VInstr.Visitor<Throwable> {
+
+    private static IndentPrinter printer;
+
+    public static void main(String[] args)
+            throws Throwable {
+        Op[] ops = {
+                Op.Add, Op.Sub, Op.MulS, Op.Eq, Op.Lt, Op.LtS,
+                Op.PrintIntS, Op.HeapAllocZ, Op.Error,
+        };
+        boolean allowLocals = false;
+        String[] registers = {
+                "v0", "v1",
+                "a0", "a1", "a2", "a3",
+                "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+                "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+                "t8",
+        };
+        boolean allowStack = true;
+
+        VaporProgram program = null;
+        try {
+            program = VaporParser.run(new InputStreamReader(new FileInputStream("Factorial.vaporm")), 1, 1,
+                    java.util.Arrays.asList(ops),
+                    allowLocals, registers, allowStack);
+        } catch (ProblemException ex) {
+            System.err.println(ex.getMessage());
+            System.exit(1);
+        }
+
+        printer = new IndentPrinter(new PrintWriter(System.out), "  ");
+        printer.println(".data");
+        printer.println("");
+        for (VDataSegment segment : program.dataSegments) {
+            printer.println(String.format("%s:", segment.ident));
+            printer.indent();
+            for (VOperand operand : segment.values)
+                printer.println(((VLabelRef) operand).ident);
+            printer.dedent();
+            printer.println("");
+        }
+
+        printer.println(".text");
+        printer.println("");
+        printer.indent();
+        printer.println("jal Main");
+        printer.println("li $v0 10");
+        printer.println("syscall");
+        printer.dedent();
+        printer.println("");
+
+        VM2M v2vm = new VM2M();
+        for (VFunction function : program.functions) {
+            printer.println(function.ident);
+            printer.indent();
+
+            printer.println("sw $fp -8($sp)");
+            printer.println("move $fp $sp");
+            printer.println("subu $sp $sp 12");
+            printer.println("sw $ra -4($fp)");
+
+            int line;
+            LinkedList<VCodeLabel> labels = new LinkedList<VCodeLabel>();
+            Collections.addAll(labels, function.labels);
+            for (VInstr instr : function.body) {
+                line = instr.sourcePos.line;
+                printer.dedent();
+                while (!labels.isEmpty() && labels.peek().sourcePos.line < line)
+                    printer.println(String.format("%s:", labels.pop().ident));
+                printer.indent();
+                instr.accept(v2vm);
+            }
+
+            printer.dedent();
+            printer.println("");
+        }
+
+        printer.println("_print:");
+        printer.println("li $v0 1   # syscall: print integer");
+        printer.println("syscall");
+        printer.println("la $a0 _newline");
+        printer.println("li $v0 4   # syscall: print string");
+        printer.println("syscall");
+        printer.println("jr $ra");
+        printer.println("");
+        printer.println("_error:");
+        printer.println("li $v0 4   # syscall: print string");
+        printer.println("syscall");
+        printer.println("li $v0 10  # syscall: exit");
+        printer.println("syscall");
+        printer.println("");
+        printer.println("_heapAlloc:");
+        printer.println("li $v0 9   # syscall: sbrk");
+        printer.println("syscall");
+        printer.println("jr $ra");
+        printer.println("");
+        printer.println(".data");
+        printer.println(".align 0");
+        printer.println("_newline: .asciiz \"\\n\"");
+        printer.println("_str0: .asciiz \"null pointer\\n\"");
+
+        printer.close();
+    }
+
+    @Override
+    public void visit(VAssign vAssign) throws Throwable {
+        if (vAssign.source instanceof VVarRef.Register)
+            printer.println(String.format("move %s %s", vAssign.dest.toString(), vAssign.source.toString()));
+        else
+            printer.println(String.format("li %s %s", vAssign.dest.toString(), vAssign.source));
+    }
+
+    @Override
+    public void visit(VCall vCall) throws Throwable {
+        for (int i = 0; i < vCall.args.length; i++) {
+            if (vCall.args[i] instanceof VVarRef.Register)
+                printer.println(String.format("move $a%d %s", i, vCall.args[i].toString()));
+            else
+                printer.println(String.format("li $a%d %s", i, vCall.args[i]));
+        }
+
+        String addr = vCall.addr.toString();
+        if (addr == null)
+            addr = vCall.addr.toString();
+        printer.println(String.format("jalr %s", addr));
+        if (vCall.dest != null)
+            printer.println(String.format("%s = $v0", vCall.dest));
+    }
+
+    @Override
+    public void visit(VBuiltIn vBuiltIn) throws Throwable {
+        if (vBuiltIn.op.name.equals("Error")) {
+            printer.println("la $a0 _str0");
+            printer.println("j _error");
+        } else if (vBuiltIn.op.name.equals("HeapAllocZ") || vBuiltIn.op.name.equals("PrintIntS")) {
+            for (int i = 0; i < vBuiltIn.args.length; i++) {
+                if (vBuiltIn.args[i] instanceof VVarRef.Register)
+                    printer.println(String.format("move $a%d %s", i, vBuiltIn.args[i].toString()));
+                else
+                    printer.println(String.format("li $a%d %s", i, vBuiltIn.args[i]));
+            }
+
+            if (vBuiltIn.op.name.equals("HeapAllocZ"))
+                printer.println(String.format("jal _heapAlloc"));
+            else if (vBuiltIn.op.name.equals("PrintIntS"))
+                printer.println(String.format("jal _print"));
+
+            if (vBuiltIn.dest != null)
+                printer.println(String.format("move %s $v0", vBuiltIn.dest));
+        } else {
+            String op = "";
+            if (vBuiltIn.op.name.equals("LtS"))
+                op = "slti";
+            else if (vBuiltIn.op.name.equals("Sub"))
+                op = "subu";
+            else if (vBuiltIn.op.name.equals("MulS"))
+                op = "mul";
+            printer.println(String.format("%s %s %s %s", op, vBuiltIn.dest, vBuiltIn.args[0], vBuiltIn.args[1]));
+        }
+    }
+
+    @Override
+    public void visit(VMemWrite vMemWrite) throws Throwable {
+        if (vMemWrite.dest instanceof VMemRef.Global) {
+            printer.println(String.format("la $t9 %s", vMemWrite.source));
+            VMemRef.Global dest = (VMemRef.Global) vMemWrite.dest;
+            printer.println(String.format("sw $t9 %d(%s)", dest.byteOffset, dest.base));
+        } else {
+            VMemRef.Stack dest = (VMemRef.Stack) vMemWrite.dest;
+            printer.println(String.format("sw %s %d($sp)", vMemWrite.source, 4 * dest.index));
+        }
+    }
+
+    @Override
+    public void visit(VMemRead vMemRead) throws Throwable {
+        String source = "";
+        int byteOffset = -1;
+        if (vMemRead.source instanceof VMemRef.Global) {
+            source = ((VMemRef.Global) vMemRead.source).base.toString();
+            byteOffset = ((VMemRef.Global) vMemRead.source).byteOffset;
+        }
+        printer.println(String.format("lw %s %d(%s)", vMemRead.dest.toString(), byteOffset, source));
+    }
+
+    @Override
+    public void visit(VBranch vBranch) throws Throwable {
+        if (vBranch.positive)
+            printer.println(String.format("bnez %s %s", vBranch.value, vBranch.target.ident));
+        else
+            printer.println(String.format("beqz %s %s", vBranch.value, vBranch.target.ident));
+    }
+
+    @Override
+    public void visit(VGoto vGoto) throws Throwable {
+        printer.println(String.format("j %s", ((VAddr.Label) vGoto.target).label.ident));
+    }
+
+    @Override
+    public void visit(VReturn vReturn) throws Throwable {
+        if (vReturn.value != null) {
+            String value = vReturn.value.toString();
+            if (value == null)
+                value = vReturn.value.toString();
+            printer.println(String.format("$v0 = %s", value));
+        }
+
+        printer.println("lw $ra -4($fp)");
+        printer.println("lw $fp -8($fp)");
+        printer.println("addu $sp $sp 8");
+        printer.println("jr $ra");
+    }
+}
