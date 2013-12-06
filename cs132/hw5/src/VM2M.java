@@ -197,7 +197,8 @@ public class VM2M extends VInstr.Visitor<Throwable> {
     @Override
     public void visit(VMemWrite vMemWrite) throws Throwable {
         if (vMemWrite.dest instanceof VMemRef.Global) {
-            printer.println(String.format("la $t9 %s", ((VLabelRef) vMemWrite.source).ident));
+            if (vMemWrite.source instanceof VLabelRef)
+                printer.println(String.format("la $t9 %s", ((VLabelRef) vMemWrite.source).ident));
             VMemRef.Global dest = (VMemRef.Global) vMemWrite.dest;
             printer.println(String.format("sw $t9 %d(%s)", dest.byteOffset, dest.base));
         } else {
