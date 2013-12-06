@@ -202,14 +202,11 @@ public class VM2M extends VInstr.Visitor<Throwable> {
             printer.println(String.format("sw $t9 %d(%s)", dest.byteOffset, dest.base));
         } else {
             VMemRef.Stack dest = (VMemRef.Stack) vMemWrite.dest;
-            String register = "$sp";
-            if (dest.region == VMemRef.Stack.Region.In)
-                register = "$fp";
             if (vMemWrite.source instanceof VVarRef.Register) {
-                printer.println(String.format("sw %s %d(%s)", vMemWrite.source, 4 * dest.index, register));
+                printer.println(String.format("sw %s %d($sp)", vMemWrite.source, 4 * dest.index));
             } else {
                 printer.println(String.format("li $t9 %s", vMemWrite.source));
-                printer.println(String.format("sw $t9 %d(%s)", 4 * dest.index, register));
+                printer.println(String.format("sw $t9 %d($sp)", 4 * dest.index));
             }
         }
     }
@@ -223,6 +220,8 @@ public class VM2M extends VInstr.Visitor<Throwable> {
             byteOffset = ((VMemRef.Global) vMemRead.source).byteOffset;
         } else {
             byteOffset = 4 * ((VMemRef.Stack) vMemRead.source).index;
+            if (((VMemRef.Stack) vMemRead.source).region == VMemRef.Stack.Region.In)
+                source = "$fp";
         }
         printer.println(String.format("lw %s %d(%s)", vMemRead.dest.toString(), byteOffset, source));
     }
