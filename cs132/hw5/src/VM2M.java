@@ -64,7 +64,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
 
         VM2M v2vm = new VM2M();
         for (VFunction function : program.functions) {
-            printer.println(function.ident);
+            printer.println(String.format("%s:", function.ident));
             printer.indent();
 
             printer.println("sw $fp -8($sp)");
@@ -89,23 +89,29 @@ public class VM2M extends VInstr.Visitor<Throwable> {
         }
 
         printer.println("_print:");
+        printer.indent();
         printer.println("li $v0 1   # syscall: print integer");
         printer.println("syscall");
         printer.println("la $a0 _newline");
         printer.println("li $v0 4   # syscall: print string");
         printer.println("syscall");
         printer.println("jr $ra");
+        printer.dedent();
         printer.println("");
         printer.println("_error:");
+        printer.indent();
         printer.println("li $v0 4   # syscall: print string");
         printer.println("syscall");
         printer.println("li $v0 10  # syscall: exit");
         printer.println("syscall");
+        printer.dedent();
         printer.println("");
         printer.println("_heapAlloc:");
+        printer.indent();
         printer.println("li $v0 9   # syscall: sbrk");
         printer.println("syscall");
         printer.println("jr $ra");
+        printer.dedent();
         printer.println("");
         printer.println(".data");
         printer.println(".align 0");
@@ -175,7 +181,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
     @Override
     public void visit(VMemWrite vMemWrite) throws Throwable {
         if (vMemWrite.dest instanceof VMemRef.Global) {
-            printer.println(String.format("la $t9 %s", vMemWrite.source));
+            printer.println(String.format("la $t9 %s", ((VLabelRef) vMemWrite.source).ident));
             VMemRef.Global dest = (VMemRef.Global) vMemWrite.dest;
             printer.println(String.format("sw $t9 %d(%s)", dest.byteOffset, dest.base));
         } else {
@@ -186,11 +192,13 @@ public class VM2M extends VInstr.Visitor<Throwable> {
 
     @Override
     public void visit(VMemRead vMemRead) throws Throwable {
-        String source = "";
-        int byteOffset = -1;
+        String source = "$sp";
+        int byteOffset;
         if (vMemRead.source instanceof VMemRef.Global) {
             source = ((VMemRef.Global) vMemRead.source).base.toString();
             byteOffset = ((VMemRef.Global) vMemRead.source).byteOffset;
+        } else {
+            byteOffset = 4 * ((VMemRef.Stack) vMemRead.source).index;
         }
         printer.println(String.format("lw %s %d(%s)", vMemRead.dest.toString(), byteOffset, source));
     }
