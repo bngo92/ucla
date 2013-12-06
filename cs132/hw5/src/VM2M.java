@@ -17,6 +17,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
     private static boolean error;
     private static boolean heapAlloc;
     private static boolean nullPointer;
+    private static boolean array;
 
     public static void main(String[] args)
             throws Throwable {
@@ -131,6 +132,8 @@ public class VM2M extends VInstr.Visitor<Throwable> {
         printer.println("_newline: .asciiz \"\\n\"");
         if (nullPointer)
             printer.println("_str0: .asciiz \"null pointer\\n\"");
+        if (array)
+            printer.println("_str1: .asciiz \"array index out of bounds\\n\"");
 
         printer.close();
     }
@@ -159,11 +162,15 @@ public class VM2M extends VInstr.Visitor<Throwable> {
     @Override
     public void visit(VBuiltIn vBuiltIn) throws Throwable {
         if (vBuiltIn.op.name.equals("Error")) {
-            printer.println("la $a0 _str0");
+            if (vBuiltIn.args[0].toString().equals("\"null pointer\"")) {
+                printer.println("la $a0 _str0");
+                nullPointer = true;
+            } else {
+                printer.println("la $a0 _str1");
+                array = true;
+            }
             printer.println("j _error");
             error = true;
-            if (vBuiltIn.args[0].toString().equals("\"null pointer\""))
-                nullPointer = true;
         } else if (vBuiltIn.op.name.equals("HeapAllocZ") || vBuiltIn.op.name.equals("PrintIntS")) {
             for (int i = 0; i < vBuiltIn.args.length; i++) {
                 if (vBuiltIn.args[i] instanceof VVarRef.Register)
@@ -190,6 +197,8 @@ public class VM2M extends VInstr.Visitor<Throwable> {
                 op = "subu";
             else if (vBuiltIn.op.name.equals("MulS"))
                 op = "mul";
+            else
+                op = "addu";
             printer.println(String.format("%s %s %s %s", op, vBuiltIn.dest, vBuiltIn.args[0], vBuiltIn.args[1]));
         }
     }
