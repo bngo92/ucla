@@ -71,7 +71,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
             printer.indent();
             printer.println("sw $fp -8($sp)");
             printer.println("move $fp $sp");
-            printer.println(String.format("subu $sp $sp %d", 4 * (2 + function.stack.in + function.stack.local)));
+            printer.println(String.format("subu $sp $sp %d", 4 * (2 + function.stack.in + function.stack.out + function.stack.local)));
             printer.println("sw $ra -4($fp)");
 
             int line;
@@ -89,7 +89,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
 
             printer.println("lw $ra -4($fp)");
             printer.println("lw $fp -8($fp)");
-            printer.println(String.format("addu $sp $sp %d", 4 * (2 + function.stack.in + function.stack.local)));
+            printer.println(String.format("addu $sp $sp %d", 4 * (2 + function.stack.in + function.stack.out + function.stack.local)));
             printer.println("jr $ra");
             printer.dedent();
             printer.println("");
@@ -201,7 +201,10 @@ public class VM2M extends VInstr.Visitor<Throwable> {
             printer.println(String.format("sw $t9 %d(%s)", dest.byteOffset, dest.base));
         } else {
             VMemRef.Stack dest = (VMemRef.Stack) vMemWrite.dest;
-            printer.println(String.format("sw %s %d($sp)", vMemWrite.source, 4 * dest.index));
+            String register = "$sp";
+            if (dest.region.ordinal() == 1)
+                register = "$fp";
+            printer.println(String.format("sw %s %d(%s)", vMemWrite.source, 4 * dest.index, register));
         }
     }
 
