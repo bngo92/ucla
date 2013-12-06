@@ -150,10 +150,11 @@ public class VM2M extends VInstr.Visitor<Throwable> {
                 printer.println(String.format("li $a%d %s", i, vCall.args[i]));
         }
 
-        String addr = vCall.addr.toString();
-        if (addr == null)
-            addr = vCall.addr.toString();
-        printer.println(String.format("jalr %s", addr));
+        if (vCall.addr instanceof VAddr.Label) {
+            printer.println(String.format("jal %s", ((VAddr.Label) vCall.addr).label.ident));
+        } else {
+            printer.println(String.format("jalr %s", vCall.addr));
+        }
         if (vCall.dest != null)
             printer.println(String.format("%s = $v0", vCall.dest));
     }
