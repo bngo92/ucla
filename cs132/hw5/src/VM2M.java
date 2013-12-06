@@ -4,7 +4,6 @@ import cs132.vapor.ast.*;
 import cs132.vapor.ast.VBuiltIn.Op;
 import cs132.vapor.parser.VaporParser;
 
-import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Collections;
@@ -14,6 +13,9 @@ import java.util.LinkedList;
 public class VM2M extends VInstr.Visitor<Throwable> {
 
     private static IndentPrinter printer;
+    private static boolean print;
+    private static boolean error;
+    private static boolean heapAlloc;
 
     public static void main(String[] args)
             throws Throwable {
@@ -92,31 +94,37 @@ public class VM2M extends VInstr.Visitor<Throwable> {
             printer.println("");
         }
 
-        printer.println("_print:");
-        printer.indent();
-        printer.println("li $v0 1   # syscall: print integer");
-        printer.println("syscall");
-        printer.println("la $a0 _newline");
-        printer.println("li $v0 4   # syscall: print string");
-        printer.println("syscall");
-        printer.println("jr $ra");
-        printer.dedent();
-        printer.println("");
-        printer.println("_error:");
-        printer.indent();
-        printer.println("li $v0 4   # syscall: print string");
-        printer.println("syscall");
-        printer.println("li $v0 10  # syscall: exit");
-        printer.println("syscall");
-        printer.dedent();
-        printer.println("");
-        printer.println("_heapAlloc:");
-        printer.indent();
-        printer.println("li $v0 9   # syscall: sbrk");
-        printer.println("syscall");
-        printer.println("jr $ra");
-        printer.dedent();
-        printer.println("");
+        if (print) {
+            printer.println("_print:");
+            printer.indent();
+            printer.println("li $v0 1   # syscall: print integer");
+            printer.println("syscall");
+            printer.println("la $a0 _newline");
+            printer.println("li $v0 4   # syscall: print string");
+            printer.println("syscall");
+            printer.println("jr $ra");
+            printer.dedent();
+            printer.println("");
+        }
+        if (error) {
+            printer.println("_error:");
+            printer.indent();
+            printer.println("li $v0 4   # syscall: print string");
+            printer.println("syscall");
+            printer.println("li $v0 10  # syscall: exit");
+            printer.println("syscall");
+            printer.dedent();
+            printer.println("");
+        }
+        if (heapAlloc) {
+            printer.println("_heapAlloc:");
+            printer.indent();
+            printer.println("li $v0 9   # syscall: sbrk");
+            printer.println("syscall");
+            printer.println("jr $ra");
+            printer.dedent();
+            printer.println("");
+        }
         printer.println(".data");
         printer.println(".align 0");
         printer.println("_newline: .asciiz \"\\n\"");
@@ -155,6 +163,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
         if (vBuiltIn.op.name.equals("Error")) {
             printer.println("la $a0 _str0");
             printer.println("j _error");
+            error = true;
         } else if (vBuiltIn.op.name.equals("HeapAllocZ") || vBuiltIn.op.name.equals("PrintIntS")) {
             for (int i = 0; i < vBuiltIn.args.length; i++) {
                 if (vBuiltIn.args[i] instanceof VVarRef.Register)
@@ -163,10 +172,13 @@ public class VM2M extends VInstr.Visitor<Throwable> {
                     printer.println(String.format("li $a%d %s", i, vBuiltIn.args[i]));
             }
 
-            if (vBuiltIn.op.name.equals("HeapAllocZ"))
+            if (vBuiltIn.op.name.equals("HeapAllocZ")) {
                 printer.println(String.format("jal _heapAlloc"));
-            else if (vBuiltIn.op.name.equals("PrintIntS"))
+                heapAlloc = true;
+            } else if (vBuiltIn.op.name.equals("PrintIntS")) {
                 printer.println(String.format("jal _print"));
+                print = true;
+            }
 
             if (vBuiltIn.dest != null)
                 printer.println(String.format("move %s $v0", vBuiltIn.dest));
