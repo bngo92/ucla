@@ -6,17 +6,16 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
 
     private final LinkedHashMap<String, VarRef> varRefs = new LinkedHashMap<String, VarRef>();
     private final VFunction function;
+    private final HashMap<VarRef, String> registers = new HashMap<VarRef, String>();
+    private final LinkedList<String> calleeRegisters = new LinkedList<String>();
+    private final LinkedList<String> callerRegisters = new LinkedList<String>();
+    private final LinkedList<String> freeRegisters = new LinkedList<String>();
+    private final HashMap<VarRef, String> locations = new HashMap<VarRef, String>();
     public int out;
     public int calleeRegisterCount;
-    private HashMap<VarRef, String> registers = new HashMap<VarRef, String>();
-    private LinkedList<String> calleeRegisters = new LinkedList<String>();
-    private LinkedList<String> callerRegisters = new LinkedList<String>();
-    private LinkedList<String> freeRegisters = new LinkedList<String>();
-
     private LinkedList<VarRef> active;
-    private HashMap<VarRef, String> locations = new HashMap<VarRef, String>();
 
-    public LivenessAnalysis(VFunction function) throws Throwable {
+    public LivenessAnalysis(VFunction function) {
         this.function = function;
         calleeRegisters.addAll(Arrays.asList("$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7"));
         callerRegisters.addAll(Arrays.asList("$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7", "$t8"));
@@ -317,6 +316,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
     public static class Range {
         public final int start;
         public int end;
+
         public Range(int start) {
             this.start = start;
             this.end = start;
@@ -330,6 +330,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         public final HashSet<String> readLabels;
         public boolean call;
         public boolean crossCall;
+
         public VarRef(String var, int start) {
             this.var = var;
             this.range = new Range(start);
@@ -338,6 +339,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             this.call = false;
             this.crossCall = false;
         }
+
         public void read(int line) {
             range.end = line;
             readLabels.addAll(labels);
@@ -345,13 +347,14 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
             if (call)
                 crossCall = true;
         }
+
         public void write(int line) {
             range.end = line;
             labels.clear();
         }
     }
 
-    public class SortStart implements Comparator<VarRef> {
+    private class SortStart implements Comparator<VarRef> {
         public int compare(VarRef r1, VarRef r2) {
             if (r1.range.start < r2.range.start)
                 return -1;
@@ -362,7 +365,7 @@ public class LivenessAnalysis extends VInstr.Visitor<Throwable> {
         }
     }
 
-    public class SortEnd implements Comparator<VarRef> {
+    private class SortEnd implements Comparator<VarRef> {
         public int compare(VarRef r1, VarRef r2) {
             if (r1.range.end < r2.range.end)
                 return -1;
