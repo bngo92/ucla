@@ -129,7 +129,8 @@ public class VM2M extends VInstr.Visitor<Throwable> {
         printer.println(".data");
         printer.println(".align 0");
         printer.println("_newline: .asciiz \"\\n\"");
-        printer.println("_str0: .asciiz \"null pointer\\n\"");
+        if (nullPointer)
+            printer.println("_str0: .asciiz \"null pointer\\n\"");
 
         printer.close();
     }
