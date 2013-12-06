@@ -202,7 +202,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
         } else {
             VMemRef.Stack dest = (VMemRef.Stack) vMemWrite.dest;
             String register = "$sp";
-            if (dest.region.ordinal() == 1)
+            if (dest.region.ordinal() == 0)
                 register = "$fp";
             printer.println(String.format("sw %s %d(%s)", vMemWrite.source, 4 * dest.index, register));
         }
