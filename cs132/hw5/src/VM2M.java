@@ -162,7 +162,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
             printer.println("la $a0 _str0");
             printer.println("j _error");
             error = true;
-            if (vBuiltIn.args[0].toString().equals("null pointer"))
+            if (vBuiltIn.args[0].toString().equals("\"null pointer\""))
                 nullPointer = true;
         } else if (vBuiltIn.op.name.equals("HeapAllocZ") || vBuiltIn.op.name.equals("PrintIntS")) {
             for (int i = 0; i < vBuiltIn.args.length; i++) {
