@@ -4,6 +4,7 @@ import cs132.vapor.ast.*;
 import cs132.vapor.ast.VBuiltIn.Op;
 import cs132.vapor.parser.VaporParser;
 
+import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Collections;
@@ -16,6 +17,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
     private static boolean print;
     private static boolean error;
     private static boolean heapAlloc;
+    private static boolean nullPointer;
 
     public static void main(String[] args)
             throws Throwable {
@@ -35,7 +37,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
 
         VaporProgram program = null;
         try {
-            program = VaporParser.run(new InputStreamReader(System.in), 1, 1,
+            program = VaporParser.run(new InputStreamReader(new FileInputStream("Factorial.opt.vaporm")), 1, 1,
                     java.util.Arrays.asList(ops),
                     allowLocals, registers, allowStack);
         } catch (ProblemException ex) {
@@ -137,19 +139,14 @@ public class VM2M extends VInstr.Visitor<Throwable> {
     public void visit(VAssign vAssign) throws Throwable {
         if (vAssign.source instanceof VVarRef.Register)
             printer.println(String.format("move %s %s", vAssign.dest.toString(), vAssign.source.toString()));
+        else if (vAssign.source instanceof VLabelRef)
+            printer.println(String.format("la %s %s", vAssign.dest.toString(), ((VLabelRef) vAssign.source).ident));
         else
             printer.println(String.format("li %s %s", vAssign.dest.toString(), vAssign.source));
     }
 
     @Override
     public void visit(VCall vCall) throws Throwable {
-        for (int i = 0; i < vCall.args.length; i++) {
-            if (vCall.args[i] instanceof VVarRef.Register)
-                printer.println(String.format("move $a%d %s", i, vCall.args[i].toString()));
-            else
-                printer.println(String.format("li $a%d %s", i, vCall.args[i]));
-        }
-
         if (vCall.addr instanceof VAddr.Label) {
             printer.println(String.format("jal %s", ((VAddr.Label) vCall.addr).label.ident));
         } else {
@@ -165,6 +162,8 @@ public class VM2M extends VInstr.Visitor<Throwable> {
             printer.println("la $a0 _str0");
             printer.println("j _error");
             error = true;
+            if (vBuiltIn.args[0].toString().equals("null pointer"))
+                nullPointer = true;
         } else if (vBuiltIn.op.name.equals("HeapAllocZ") || vBuiltIn.op.name.equals("PrintIntS")) {
             for (int i = 0; i < vBuiltIn.args.length; i++) {
                 if (vBuiltIn.args[i] instanceof VVarRef.Register)
