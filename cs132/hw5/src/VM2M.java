@@ -209,7 +209,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
                 printer.println(String.format("sw %s %d(%s)", vMemWrite.source, 4 * dest.index, register));
             } else {
                 printer.println(String.format("li $t9 %s", vMemWrite.source));
-                printer.println(String.format("sw %$t9 %d(%s)", 4 * dest.index, register));
+                printer.println(String.format("sw $t9 %d(%s)", 4 * dest.index, register));
             }
         }
     }
