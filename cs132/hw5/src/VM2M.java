@@ -66,10 +66,9 @@ public class VM2M extends VInstr.Visitor<Throwable> {
         for (VFunction function : program.functions) {
             printer.println(String.format("%s:", function.ident));
             printer.indent();
-
             printer.println("sw $fp -8($sp)");
             printer.println("move $fp $sp");
-            printer.println("subu $sp $sp 12");
+            printer.println(String.format("subu $sp $sp %d", 4 * (2 + function.stack.in + function.stack.local)));
             printer.println("sw $ra -4($fp)");
 
             int line;
@@ -84,6 +83,11 @@ public class VM2M extends VInstr.Visitor<Throwable> {
                 instr.accept(v2vm);
             }
 
+
+            printer.println("lw $ra -4($fp)");
+            printer.println("lw $fp -8($fp)");
+            printer.println(String.format("addu $sp $sp %d", 4 * (2 + function.stack.in + function.stack.local)));
+            printer.println("jr $ra");
             printer.dedent();
             printer.println("");
         }
@@ -224,10 +228,5 @@ public class VM2M extends VInstr.Visitor<Throwable> {
                 value = vReturn.value.toString();
             printer.println(String.format("$v0 = %s", value));
         }
-
-        printer.println("lw $ra -4($fp)");
-        printer.println("lw $fp -8($fp)");
-        printer.println("addu $sp $sp 8");
-        printer.println("jr $ra");
     }
 }
