@@ -207,15 +207,15 @@ public class VM2M extends VInstr.Visitor<Throwable> {
                 arithmetic = true;
             }
             if (arithmetic && vBuiltIn.args[0] instanceof VLitInt && vBuiltIn.args[1] instanceof VLitInt) {
-                if (op.equals("Sub"))
+                if (op.equals("subu"))
                     printer.print(String.format("li %s %d", vBuiltIn.dest,
                             Integer.getInteger(vBuiltIn.args[0].toString()) -
                                     Integer.getInteger(vBuiltIn.args[1].toString())));
-                if (op.equals("Muls"))
+                if (op.equals("mul"))
                     printer.print(String.format("li %s %d", vBuiltIn.dest,
                             Integer.getInteger(vBuiltIn.args[0].toString()) *
                                     Integer.getInteger(vBuiltIn.args[1].toString())));
-                if (op.equals("Add"))
+                if (op.equals("addu"))
                     printer.print(String.format("li %s %d", vBuiltIn.dest,
                             Integer.getInteger(vBuiltIn.args[0].toString()) +
                                     Integer.getInteger(vBuiltIn.args[1].toString())));
