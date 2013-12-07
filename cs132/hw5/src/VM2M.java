@@ -231,10 +231,12 @@ public class VM2M extends VInstr.Visitor<Throwable> {
     @Override
     public void visit(VMemWrite vMemWrite) throws Throwable {
         if (vMemWrite.dest instanceof VMemRef.Global) {
-            if (vMemWrite.source instanceof VLabelRef)
-                printer.println(String.format("la $t9 %s", ((VLabelRef) vMemWrite.source).ident));
             VMemRef.Global dest = (VMemRef.Global) vMemWrite.dest;
-            printer.println(String.format("sw $t9 %d(%s)", dest.byteOffset, dest.base));
+            if (vMemWrite.source instanceof VLabelRef) {
+                printer.println(String.format("la $t9 %s", ((VLabelRef) vMemWrite.source).ident));
+                printer.println(String.format("sw $t9 %d(%s)", dest.byteOffset, dest.base));
+            }
+            printer.println(String.format("sw %s %d(%s)", vMemWrite.source, dest.byteOffset, dest.base));
         } else {
             VMemRef.Stack dest = (VMemRef.Stack) vMemWrite.dest;
             if (vMemWrite.source instanceof VVarRef.Register) {
