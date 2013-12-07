@@ -235,8 +235,14 @@ public class VM2M extends VInstr.Visitor<Throwable> {
             if (vMemWrite.source instanceof VLabelRef) {
                 printer.println(String.format("la $t9 %s", ((VLabelRef) vMemWrite.source).ident));
                 printer.println(String.format("sw $t9 %d(%s)", dest.byteOffset, dest.base));
+            } else {
+                String source = vMemWrite.source.toString();
+                if (vMemWrite.source instanceof VLitInt) {
+                    printer.println(String.format("li $t9 %s", source));
+                    source = "$t9";
+                }
+                printer.println(String.format("sw %s %d(%s)", source, dest.byteOffset, dest.base));
             }
-            printer.println(String.format("sw %s %d(%s)", vMemWrite.source, dest.byteOffset, dest.base));
         } else {
             VMemRef.Stack dest = (VMemRef.Stack) vMemWrite.dest;
             if (vMemWrite.source instanceof VVarRef.Register) {
