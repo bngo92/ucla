@@ -4,7 +4,6 @@ import cs132.vapor.ast.*;
 import cs132.vapor.ast.VBuiltIn.Op;
 import cs132.vapor.parser.VaporParser;
 
-import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.Collections;
@@ -38,7 +37,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
 
         VaporProgram program = null;
         try {
-            program = VaporParser.run(new InputStreamReader(new FileInputStream("Factorial.vaporm")), 1, 1,
+            program = VaporParser.run(new InputStreamReader(System.in), 1, 1,
                     java.util.Arrays.asList(ops),
                     allowLocals, registers, allowStack);
         } catch (ProblemException ex) {
