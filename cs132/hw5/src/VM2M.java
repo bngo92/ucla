@@ -199,8 +199,6 @@ public class VM2M extends VInstr.Visitor<Throwable> {
                 op = "mul";
             else if (vBuiltIn.op.name.equals("Add"))
                 op = "addu";
-            if (vBuiltIn.args[1] instanceof VLitInt)
-                op += "i";
             printer.println(String.format("%s %s %s %s", op, vBuiltIn.dest, vBuiltIn.args[0], vBuiltIn.args[1]));
         }
     }
