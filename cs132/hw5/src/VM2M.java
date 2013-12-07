@@ -191,7 +191,9 @@ public class VM2M extends VInstr.Visitor<Throwable> {
                 printer.println(String.format("move %s $v0", vBuiltIn.dest));
         } else {
             String op = "";
-            if (vBuiltIn.op.name.equals("LtS"))
+            if (vBuiltIn.op.name.equals("Lt"))
+                op = "sltu";
+            else if (vBuiltIn.op.name.equals("LtS"))
                 op = "slt";
             else if (vBuiltIn.op.name.equals("Sub"))
                 op = "subu";
