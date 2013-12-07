@@ -197,7 +197,7 @@ public class VM2M extends VInstr.Visitor<Throwable> {
                 op = "subu";
             else if (vBuiltIn.op.name.equals("MulS"))
                 op = "mul";
-            else
+            else if (vBuiltIn.op.name.equals("Add"))
                 op = "addu";
             printer.println(String.format("%s %s %s %s", op, vBuiltIn.dest, vBuiltIn.args[0], vBuiltIn.args[1]));
         }
