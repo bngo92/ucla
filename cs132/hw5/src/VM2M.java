@@ -190,18 +190,41 @@ public class VM2M extends VInstr.Visitor<Throwable> {
             if (vBuiltIn.dest != null)
                 printer.println(String.format("move %s $v0", vBuiltIn.dest));
         } else {
-            String op = "";
-            if (vBuiltIn.op.name.equals("Lt"))
+            String op = vBuiltIn.op.name;
+            boolean arithmetic = false;
+            if (op.equals("Lt")) {
                 op = "sltu";
-            else if (vBuiltIn.op.name.equals("LtS"))
+            } else if (op.equals("LtS")) {
                 op = "slt";
-            else if (vBuiltIn.op.name.equals("Sub"))
+            } else if (op.equals("Sub")) {
                 op = "subu";
-            else if (vBuiltIn.op.name.equals("MulS"))
+                arithmetic = true;
+            } else if (op.equals("MulS")) {
                 op = "mul";
-            else if (vBuiltIn.op.name.equals("Add"))
+                arithmetic = true;
+            } else if (op.equals("Add")) {
                 op = "addu";
-            printer.println(String.format("%s %s %s %s", op, vBuiltIn.dest, vBuiltIn.args[0], vBuiltIn.args[1]));
+                arithmetic = true;
+            }
+            if (arithmetic && vBuiltIn.args[0] instanceof VLitInt && vBuiltIn.args[1] instanceof VLitInt) {
+                if (op.equals("Sub"))
+                    printer.print(String.format("li %s %d", vBuiltIn.dest,
+                            Integer.getInteger(vBuiltIn.args[0].toString()) -
+                                    Integer.getInteger(vBuiltIn.args[1].toString())));
+                if (op.equals("Muls"))
+                    printer.print(String.format("li %s %d", vBuiltIn.dest,
+                            Integer.getInteger(vBuiltIn.args[0].toString()) *
+                                    Integer.getInteger(vBuiltIn.args[1].toString())));
+                if (op.equals("Add"))
+                    printer.print(String.format("li %s %d", vBuiltIn.dest,
+                            Integer.getInteger(vBuiltIn.args[0].toString()) +
+                                    Integer.getInteger(vBuiltIn.args[1].toString())));
+            } else if (vBuiltIn.args[0] instanceof VLitInt) {
+                printer.println(String.format("li $t9 %s", vBuiltIn.args[0]));
+                printer.println(String.format("%s %s $t9 %s", op, vBuiltIn.dest, vBuiltIn.args[1]));
+            } else {
+                printer.println(String.format("%s %s %s %s", op, vBuiltIn.dest, vBuiltIn.args[0], vBuiltIn.args[1]));
+            }
         }
     }
 
